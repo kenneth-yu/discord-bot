@@ -67,9 +67,8 @@ client.on('message', message => {
         arg3 = arg3.join(' ');
         let messageArray = [arg1]
         argCompiler(messageArray, arg2, arg3)
-    
+        
         if(messageArray.length === 1){
-            readJson()
             newServerIdCheck(channel_id)
             switch (message.content){
                 case '!help':
@@ -86,6 +85,7 @@ client.on('message', message => {
                     message.channel.send('Please use the following format: !deleteKeyword [the keyword you want to delete here].')
                     break;
                 default:
+                    readJson()
                     if(dictionary[channel_id][message.content]){
                         message.channel.send(dictionary[channel_id][message.content])
                     }
