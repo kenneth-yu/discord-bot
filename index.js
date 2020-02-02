@@ -1,9 +1,10 @@
-const config =  require('./config.json');
+const config =  require('./config.json'); 
 const Discord = require('discord.js');
 const client = new Discord.Client();
 let fs = require('fs')
 let dictionary 
 
+//JSON Read/Write --------------------------------------------------------------------------------------------
 const readJson = () => {
     fs.readFile('./dictionary.json', 'utf8', (err, jsonString) => {
         if (err) {
@@ -33,6 +34,9 @@ const writeJson = (newDictionary) => {
     })
 }
 
+//JSON Read/Write END --------------------------------------------------------------------------------------------
+
+//Helper Functions -----------------------------------------------------------------------------------------------
 const newServerIdCheck = (channel_id) => {
     if(!dictionary[channel_id]){
         dictionary[channel_id] = {}
@@ -48,9 +52,10 @@ const argCompiler = (messageArray, arg2, arg3) => {
     }
     console.log(messageArray)
 }
+//Helper Functions END -----------------------------------------------------------------------------------------------
 
+//Discord Bot---------------------------------------------------------------------------------------------------------
 readJson()
-
 client.once('ready', () => {
     console.log('Bot is ready!')
 })
@@ -158,3 +163,4 @@ client.on('message', message => {
 })
 
 client.login(config.apiKey)
+//Discord Bot END---------------------------------------------------------------------------------------------------------
