@@ -1,6 +1,7 @@
 const config =  require('./config.json'); 
 const Discord = require('discord.js');
 const client = new Discord.Client();
+const fetch = require("node-fetch");
 let fs = require('fs')
 let dictionary 
 
@@ -54,6 +55,39 @@ const argCompiler = (messageArray, arg2, arg3) => {
 }
 //Helper Functions END -----------------------------------------------------------------------------------------------
 
+//Raider.io Fetch ---------------------------------------------------------------------------------------------
+async function getAffixes() {
+    let url = 'https://raider.io/api/v1/mythic-plus/affixes?region=us&locale=en'
+    const response = await fetch(url, {
+      method: 'GET', // *GET, POST, PUT, DELETE, etc.
+      mode: 'cors', // no-cors, *cors, same-origin
+      cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+      credentials: 'same-origin', // include, *same-origin, omit
+      headers: {
+        'Content-Type': 'application/json'
+        // 'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+    return await response.json(); // parses JSON response into native JavaScript objects
+  }
+
+  async function getChar(charName) {
+    let url = `https://raider.io/api/v1/characters/profile?region=us&realm=sargeras&name=${charName}&fields=gear%2Cmythic_plus_scores_by_season%3Acurrent`
+    const response = await fetch(url, {
+      method: 'GET', // *GET, POST, PUT, DELETE, etc.
+      mode: 'cors', // no-cors, *cors, same-origin
+      cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+      credentials: 'same-origin', // include, *same-origin, omit
+      headers: {
+        'Content-Type': 'application/json'
+        // 'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+    return await response.json(); // parses JSON response into native JavaScript objects
+  }
+  
+//Raider.io END -----------------------------------------------------------------------------------------------
+
 //Discord Bot---------------------------------------------------------------------------------------------------------
 readJson()
 client.once('ready', () => {
@@ -84,6 +118,21 @@ client.on('message', message => {
                 case '!deleteKeyword':
                     message.channel.send('Please use the following format: !deleteKeyword [the keyword you want to delete here].')
                     break;
+                case '!affixes':
+                    getAffixes().then(res => {
+                        message.channel.send('The current Mythic+ Affixes are ' + res.title + '.')
+                    })
+                    break;
+                case '!affixDetails':
+                    getAffixes().then(res => {
+                        res.affix_details.forEach(affix => {
+                            message.channel.send(affix.name + ' : ' + affix.description)
+                        })
+                    })
+                    break;
+                case '!char':
+                    message.channel.send('Please use the following format: !char [character name] (Sargeras Only).')
+                    break;
                 default:
                     readJson()
                     if(dictionary[channel_id][message.content]){
@@ -111,6 +160,14 @@ client.on('message', message => {
                     else{
                         message.channel.send("That keyword could not be found in the database.")
                     }
+                    break;
+                case '!char':
+                    getChar(messageArray[1]).then(res => {
+                        message.channel.send(res.name)
+                        message.channel.send(res.race + ' ' + res.class + ': ' + res.active_spec_name)
+                        message.channel.send('Equipped ilvl is ' + res.gear.item_level_equipped + ' with cloak rank ' + res.gear.corruption.cloakRank)
+                        message.channel.send('Current Raider.io score is: ' + res.mythic_plus_scores_by_season[0].scores.all)
+                    })
                     break;
                 case '!setReminder':
                     //!setReminder [what] [when (optional)]

@@ -4,7 +4,8 @@
   "description": "Kenny's Discord Bot",
   "main": "index.js",
   "dependencies": {
-    "discord.js": "^11.5.1"
+    "discord.js": "^11.5.1",
+    "node-fetch": "^2.6.0"
   },
   "devDependencies": {},
   "scripts": {
