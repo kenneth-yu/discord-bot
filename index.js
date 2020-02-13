@@ -71,8 +71,8 @@ async function getAffixes() {
     return await response.json(); // parses JSON response into native JavaScript objects
   }
 
-  async function getChar(charName) {
-    let url = `https://raider.io/api/v1/characters/profile?region=us&realm=sargeras&name=${charName}&fields=gear%2Cmythic_plus_scores_by_season%3Acurrent`
+  async function getChar(charName, realm = "sargeras") {
+    let url = `https://raider.io/api/v1/characters/profile?region=us&realm=${realm}&name=${charName}&fields=gear%2Cmythic_plus_scores_by_season%3Acurrent`
     const response = await fetch(url, {
       method: 'GET', // *GET, POST, PUT, DELETE, etc.
       mode: 'cors', // no-cors, *cors, same-origin
@@ -87,6 +87,23 @@ async function getAffixes() {
   }
   
 //Raider.io END -----------------------------------------------------------------------------------------------
+
+//WowProgress Fetch -------------------------------------------------------------------------------------------
+async function getRank() {
+    let url = `https://www.wowprogress.com/guild/us/sargeras/Grand+Central+Parkway/json_rank`
+    const response = await fetch(url, {
+      method: 'GET', // *GET, POST, PUT, DELETE, etc.
+      mode: 'cors', // no-cors, *cors, same-origin
+      cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+      credentials: 'same-origin', // include, *same-origin, omit
+      headers: {
+        'Content-Type': 'application/json'
+        // 'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+    return await response.json(); // parses JSON response into native JavaScript objects
+  }
+//WowProgress Fetch END -------------------------------------------------------------------------------------------
 
 //Discord Bot---------------------------------------------------------------------------------------------------------
 readJson()
@@ -131,7 +148,12 @@ client.on('message', message => {
                     })
                     break;
                 case '!char':
-                    message.channel.send('Please use the following format: !char [character name] (Sargeras Only).')
+                    message.channel.send('Please use the following format: !char [character name] [optional realm].')
+                    break;
+                case '!guildRank':
+                    getRank().then(res => {
+                        message.channel.send('Grand Central Parkway is currently rank ' + res.realm_rank +' on Sargeras and ' + res.world_rank + ' in the world.')
+                    })
                     break;
                 default:
                     readJson()
@@ -162,11 +184,17 @@ client.on('message', message => {
                     }
                     break;
                 case '!char':
+                    console.log("two args")
                     getChar(messageArray[1]).then(res => {
-                        message.channel.send(res.name)
-                        message.channel.send(res.race + ' ' + res.class + ': ' + res.active_spec_name)
-                        message.channel.send('Equipped ilvl is ' + res.gear.item_level_equipped + ' with cloak rank ' + res.gear.corruption.cloakRank)
-                        message.channel.send('Current Raider.io score is: ' + res.mythic_plus_scores_by_season[0].scores.all)
+                        if(res.statusCode === 400){
+                            message.channel.send("YOU DONE FUCKED UP A A RON. Character doesn't exist!")
+                        }
+                        else{
+                            message.channel.send(res.name + ' - ' + res.realm)
+                            message.channel.send(res.race + ' ' + res.class + ': ' + res.active_spec_name)
+                            message.channel.send('Equipped ilvl is ' + res.gear.item_level_equipped + ' with cloak rank ' + res.gear.corruption.cloakRank)
+                            message.channel.send('Current Raider.io score is ' + res.mythic_plus_scores_by_season[0].scores.all)
+                        }
                     })
                     break;
                 case '!setReminder':
@@ -213,6 +241,21 @@ client.on('message', message => {
                             message.channel.send("That keyword could not be found in the database.")
                         }
                     }
+                    break;
+                case '!char':
+                    console.log('3 args')
+                    getChar(messageArray[1], messageArray[2]).then(res => {
+                        console.log(res)
+                        if(res.statusCode === 400){
+                            message.channel.send("YOU DONE FUCKED UP A A RON. Character doesn't exist!")
+                        }
+                        else{
+                            message.channel.send(res.name + ' - ' + res.realm)
+                            message.channel.send(res.race + ' ' + res.class + ': ' + res.active_spec_name)
+                            message.channel.send('Equipped ilvl is ' + res.gear.item_level_equipped + ' with cloak rank ' + res.gear.corruption.cloakRank)
+                            message.channel.send('Current Raider.io score is ' + res.mythic_plus_scores_by_season[0].scores.all)
+                        }
+                    })
                     break;
             }
         }
