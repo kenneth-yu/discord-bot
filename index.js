@@ -2,6 +2,7 @@ const config =  require('./config.json');
 const Discord = require('discord.js');
 const client = new Discord.Client();
 const fetch = require("node-fetch");
+const schedule = require('node-schedule');
 let fs = require('fs')
 let dictionary 
 
@@ -111,6 +112,14 @@ client.once('ready', () => {
     console.log('Bot is ready!')
 })
 
+var rule = new schedule.RecurrenceRule();
+rule.dayOfWeek = [new schedule.Range(3, 4)];
+rule.hour = 2;
+rule.minute = 0;
+var j = schedule.scheduleJob(rule, function(){
+    client.channels.get(`648974529217036310`).send("Reminder: " + `<@&453698550174318623> Don't forget to set up WarcraftLogs!`)
+}); 
+
 client.on('message', message => {
     if(message.content[0] === '!'){
         let channel_id = message.channel.guild.id
@@ -154,6 +163,9 @@ client.on('message', message => {
                     getRank().then(res => {
                         message.channel.send('Grand Central Parkway is currently rank ' + res.realm_rank +' on Sargeras and ' + res.world_rank + ' in the world.')
                     })
+                    break;
+                case '!setReminder':
+                    // message.channel.send('Please use the format: !setReminder [time (24 hour time)] [date (optional)]')
                     break;
                 default:
                     readJson()
