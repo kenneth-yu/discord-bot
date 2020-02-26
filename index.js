@@ -112,11 +112,14 @@ client.once('ready', () => {
     console.log('Bot is ready!')
 })
 
+//remember that node-scheduler uses GMT/UTC
 var rule = new schedule.RecurrenceRule();
-rule.dayOfWeek = [new schedule.Range(3, 4)];
+rule.dayOfWeek = [new schedule.Range(4, 5)];
 rule.hour = 2;
 rule.minute = 0;
-var j = schedule.scheduleJob(rule, function(){
+
+//By default schedule warcraft log reminders
+schedule.scheduleJob("warcraftlogs reminder", rule, function(){
     client.channels.get(`648974529217036310`).send("Reminder: " + `<@&453698550174318623> Don't forget to set up WarcraftLogs!`)
 }); 
 
@@ -166,6 +169,33 @@ client.on('message', message => {
                     break;
                 case '!setReminder':
                     // message.channel.send('Please use the format: !setReminder [time (24 hour time)] [date (optional)]')
+                    break;
+                case '!enableLogReminder':
+                    if(schedule.scheduledJobs["warcraftlogs reminder"]){
+                        message.channel.send('WarcraftLog Reminder is already scheduled!')
+                    }
+                    else{
+                        schedule.scheduleJob("warcraftlogs reminder", rule, function(){
+                            client.channels.get(`648974529217036310`).send("Reminder: " + `<@&453698550174318623> Don't forget to set up WarcraftLogs!`)
+                        }); 
+                        if(schedule.scheduledJobs["warcraftlogs reminder"]){
+                            message.channel.send('WarcraftLog Reminder successfully scheduled!')
+                        }
+                    }
+                    break;
+                case '!disableLogReminder':
+                    if(schedule.scheduledJobs["warcraftlogs reminder"]){
+                        schedule.scheduledJobs["warcraftlogs reminder"].cancel()
+                        if(!schedule.scheduledJobs["warcraftlogs reminder"]){
+                            message.channel.send('WarcraftLog reminder is cancelled!')
+                        }
+                        else{
+                            message.channel.send("Failed to cancel WarcraftLog Reminder!")
+                        }
+                    }
+                    else{
+                        message.channel.send("Warcraftlog reminder has already been disabled!")
+                    }
                     break;
                 default:
                     readJson()
