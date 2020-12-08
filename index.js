@@ -5,6 +5,11 @@ const fetch = require("node-fetch");
 const schedule = require('node-schedule');
 let fs = require('fs')
 let dictionary 
+let daylightSavings = false;
+
+client.on('error', (err) => {
+    console.log(err.message)
+ });
 
 //JSON Read/Write --------------------------------------------------------------------------------------------
 const readJson = () => {
@@ -115,7 +120,7 @@ client.once('ready', () => {
 //remember that node-scheduler uses GMT/UTC
 var rule = new schedule.RecurrenceRule();
 rule.dayOfWeek = [new schedule.Range(4, 5)];
-rule.hour = 2;
+rule.hour =  daylightSavings ? 0 : 1;
 rule.minute = 0;
 
 //By default schedule warcraft log reminders
@@ -134,6 +139,23 @@ client.on('message', message => {
         if(messageArray.length === 1){
             newServerIdCheck(channel_id)
             switch (message.content){
+                // case '!test':
+                //     message.channel.send("waiting for first reply");
+                //     const collector = new Discord.MessageCollector(message.channel, m => m.author.id === message.author.id, { time: 10000 });
+                //     collector.on('collect', message => {
+                //             console.log(message.content)
+                //             let something = [...collector.collected.keys()]
+                //             console.log(something)
+                //             if(something.length === 1){
+                //                 message.channel.send("first message received")
+                //             }
+                //             else if(something.length === 2){
+                //                 message.channel.send("second message received")
+                //                 console.log(typeof something[0])
+                //                 console.log(collector.collectedg)
+                //             }
+                //     })
+                //     break;
                 case '!help':
                     message.channel.send("Hi, I can do accept keywords using !newKeyword, as well as !editKeyword and !deleteKeyword.")
                     break;
@@ -195,6 +217,45 @@ client.on('message', message => {
                     }
                     else{
                         message.channel.send("Warcraftlog reminder has already been disabled!")
+                    }
+                    break;
+                case '!daylightSavings':
+                    message.channel.send(`Daylight Savings is currently ${daylightSavings ? "on" : "off"}`)
+                    break;
+                case '!daylightSavingsOn':
+                    if(daylightSavings){
+                        message.channel.send("Daylight Savings is already on")
+                    }
+                    else{
+                        daylightSavings = true
+                        message.channel.send(`Daylight Savings is has been set to ${daylightSavings ? "on" : "off"}`)
+                        if(schedule.scheduledJobs["warcraftlogs reminder"]){
+                            schedule.scheduledJobs["warcraftlogs reminder"].cancel()
+                            schedule.scheduleJob("warcraftlogs reminder", rule, function(){
+                                client.channels.get(`648974529217036310`).send("Reminder: " + `<@&453698550174318623> Don't forget to set up WarcraftLogs!`)
+                            }); 
+                            if(schedule.scheduledJobs["warcraftlogs reminder"]){
+                                message.channel.send('WarcraftLog Reminder successfully scheduled!')
+                            }
+                        }
+                    }
+                    break;
+                case '!daylightSavingsOff':
+                    if(!daylightSavings){
+                        message.channel.send("Daylight Savings is already off")
+                    }
+                    else{
+                       daylightSavings = false
+                       message.channel.send(`Daylight Savings is has been set to ${daylightSavings ? "on" : "off"}`)
+                       if(schedule.scheduledJobs["warcraftlogs reminder"]){
+                            schedule.scheduledJobs["warcraftlogs reminder"].cancel()
+                            schedule.scheduleJob("warcraftlogs reminder", rule, function(){
+                                client.channels.get(`648974529217036310`).send("Reminder: " + `<@&453698550174318623> Don't forget to set up WarcraftLogs!`)
+                        }); 
+                            if(schedule.scheduledJobs["warcraftlogs reminder"]){
+                                message.channel.send('WarcraftLog Reminder successfully scheduled!')
+                            }
+                        }
                     }
                     break;
                 default:
