@@ -120,7 +120,7 @@ client.once('ready', () => {
 //remember that node-scheduler uses GMT/UTC
 var rule = new schedule.RecurrenceRule();
 rule.dayOfWeek = [new schedule.Range(4, 5)];
-rule.hour =  daylightSavings ? 0 : 1;
+rule.hour =  daylightSavings ? 1 : 2;
 rule.minute = 0;
 
 //By default schedule warcraft log reminders
