@@ -3,6 +3,7 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 const fetch = require("node-fetch");
 const schedule = require('node-schedule');
+const moment = require('moment');
 let fs = require('fs')
 let dictionary 
 let daylightSavings = false;
@@ -118,6 +119,8 @@ client.once('ready', () => {
 })
 
 //remember that node-scheduler uses GMT/UTC
+//9:00PM EST is 01:00 UTC w/ Daylight Savings - 4 Hour Difference
+//9:00PM EST is 02:00 UTC w/o Daylight Savings - 5 Hour Difference
 var rule = new schedule.RecurrenceRule();
 rule.dayOfWeek = [new schedule.Range(4, 5)];
 rule.hour =  daylightSavings ? 1 : 2;
@@ -289,6 +292,7 @@ client.on('message', message => {
                 case '!char':
                     console.log("two args")
                     getChar(messageArray[1]).then(res => {
+                        console.log(res)
                         if(res.statusCode === 400){
                             message.channel.send("YOU DONE FUCKED UP A A RON. Character doesn't exist!")
                         }
@@ -297,6 +301,7 @@ client.on('message', message => {
                             message.channel.send(res.race + ' ' + res.class + ': ' + res.active_spec_name)
                             message.channel.send('Equipped ilvl is ' + res.gear.item_level_equipped)
                             message.channel.send('Current Raider.io score is ' + res.mythic_plus_scores_by_season[0].scores.all)
+                            message.channel.send('Last Updated at ' + moment(res.last_crawled_at).format('MMMM Do YYYY, h:mm:ss a'));
                         }
                     })
                     break;
@@ -357,6 +362,7 @@ client.on('message', message => {
                             message.channel.send(res.race + ' ' + res.class + ': ' + res.active_spec_name)
                             message.channel.send('Equipped ilvl is ' + res.gear.item_level_equipped + ' with cloak rank ' + res.gear.corruption.cloakRank)
                             message.channel.send('Current Raider.io score is ' + res.mythic_plus_scores_by_season[0].scores.all)
+                            message.channel.send('Last Updated at ' + moment(res.last_crawled_at).format('MMMM Do YYYY, h:mm:ss a'));
                         }
                     })
                     break;
