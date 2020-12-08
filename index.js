@@ -251,7 +251,7 @@ client.on('message', message => {
                             schedule.scheduledJobs["warcraftlogs reminder"].cancel()
                             schedule.scheduleJob("warcraftlogs reminder", rule, function(){
                                 client.channels.get(`648974529217036310`).send("Reminder: " + `<@&453698550174318623> Don't forget to set up WarcraftLogs!`)
-                        }); 
+                        });
                             if(schedule.scheduledJobs["warcraftlogs reminder"]){
                                 message.channel.send('WarcraftLog Reminder successfully scheduled!')
                             }
@@ -295,7 +295,7 @@ client.on('message', message => {
                         else{
                             message.channel.send(res.name + ' - ' + res.realm)
                             message.channel.send(res.race + ' ' + res.class + ': ' + res.active_spec_name)
-                            message.channel.send('Equipped ilvl is ' + res.gear.item_level_equipped + ' with cloak rank ' + res.gear.corruption.cloakRank)
+                            message.channel.send('Equipped ilvl is ' + res.gear.item_level_equipped)
                             message.channel.send('Current Raider.io score is ' + res.mythic_plus_scores_by_season[0].scores.all)
                         }
                     })
