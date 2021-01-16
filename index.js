@@ -132,108 +132,83 @@ schedule.scheduleJob("warcraftlogs reminder", rule, function(){
 }); 
 
 client.on('message', message => {
-    if(message.content[0] === '!'){
-        let channel_id = message.channel.guild.id
-        var [arg1,arg2, ...arg3] = message.content.split(' ');
-        arg3 = arg3.join(' ');
+    if(message.channel.type === 'dm'){
+        let suggestion_box_id = '459125119906873345' //suggestion-box channel id
+        var [arg1, ...arg2] = message.content.split(' ')
+        arg2 = arg2.join(' ')
         let messageArray = [arg1]
-        argCompiler(messageArray, arg2, arg3)
-        
+        argCompiler(messageArray, arg2)
+
         if(messageArray.length === 1){
-            newServerIdCheck(channel_id)
-            switch (message.content){
-                // case '!test':
-                //     message.channel.send("waiting for first reply");
-                //     const collector = new Discord.MessageCollector(message.channel, m => m.author.id === message.author.id, { time: 10000 });
-                //     collector.on('collect', message => {
-                //             console.log(message.content)
-                //             let something = [...collector.collected.keys()]
-                //             console.log(something)
-                //             if(something.length === 1){
-                //                 message.channel.send("first message received")
-                //             }
-                //             else if(something.length === 2){
-                //                 message.channel.send("second message received")
-                //                 console.log(typeof something[0])
-                //                 console.log(collector.collectedg)
-                //             }
-                //     })
-                //     break;
-                case '!help':
-                    message.channel.send("Hi, I can do accept keywords using !newKeyword, as well as !editKeyword and !deleteKeyword.")
+            switch(messageArray[0]){
+                case '!suggest':
+                    message.channel.send('Please use the following format to send an anonymous suggestion: !suggest [your message here]')
                     break;
-                case '!newKeyword':
-                    //!newKeyword [key] [value]
-                    message.channel.send('Please use the following format: !newKeyword [keyword here] [corresponding value here].')
+            }
+        }
+        if(messageArray.length === 2){
+            switch(messageArray[0]){
+                case '!suggest':
+                    client.channels.get(suggestion_box_id).send(messageArray[1]);
+                    message.channel.send("Message sent successfully!")
                     break;
-                case '!editKeyword':
-                    message.channel.send('Please use the following format: !editKeyword [keyword here] [updated value here].')
-                    break;
-                case '!deleteKeyword':
-                    message.channel.send('Please use the following format: !deleteKeyword [the keyword you want to delete here].')
-                    break;
-                case '!affixes':
-                    getAffixes().then(res => {
-                        message.channel.send('The current Mythic+ Affixes are ' + res.title + '.')
-                    })
-                    break;
-                case '!affixDetails':
-                    getAffixes().then(res => {
-                        res.affix_details.forEach(affix => {
-                            message.channel.send(affix.name + ' : ' + affix.description)
+            }
+        }
+    }else{
+        if(message.content[0] === '!'){
+            let channel_id = message.channel.guild.id
+            var [arg1,arg2, ...arg3] = message.content.split(' ');
+            arg3 = arg3.join(' ');
+            let messageArray = [arg1]
+            argCompiler(messageArray, arg2, arg3)
+            
+            if(messageArray.length === 1){
+                newServerIdCheck(channel_id)
+                switch (message.content){
+                    case '!suggest':
+                        message.channel.send("You can send an anonymous message to the suggestion-box channel by direct messaging me !suggest [your message here]")
+                        break;
+                    case '!help':
+                        message.channel.send("Hi, I can do accept keywords using !newKeyword, as well as !editKeyword and !deleteKeyword.")
+                        break;
+                    case '!newKeyword':
+                        //!newKeyword [key] [value]
+                        message.channel.send('Please use the following format: !newKeyword [keyword here] [corresponding value here].')
+                        break;
+                    case '!editKeyword':
+                        message.channel.send('Please use the following format: !editKeyword [keyword here] [updated value here].')
+                        break;
+                    case '!deleteKeyword':
+                        message.channel.send('Please use the following format: !deleteKeyword [the keyword you want to delete here].')
+                        break;
+                    case '!affixes':
+                        getAffixes().then(res => {
+                            message.channel.send('The current Mythic+ Affixes are ' + res.title + '.')
                         })
-                    })
-                    break;
-                case '!char':
-                    message.channel.send('Please use the following format: !char [character name] [optional realm].')
-                    break;
-                case '!guildRank':
-                    getRank().then(res => {
-                        message.channel.send('Grand Central Parkway is currently rank ' + res.realm_rank +' on Sargeras and ' + res.world_rank + ' in the world.')
-                    })
-                    break;
-                case '!setReminder':
-                    // message.channel.send('Please use the format: !setReminder [time (24 hour time)] [date (optional)]')
-                    break;
-                case '!enableLogReminder':
-                    if(schedule.scheduledJobs["warcraftlogs reminder"]){
-                        message.channel.send('WarcraftLog Reminder is already scheduled!')
-                    }
-                    else{
-                        schedule.scheduleJob("warcraftlogs reminder", rule, function(){
-                            client.channels.get(`648974529217036310`).send("Reminder: " + `<@&453698550174318623> Don't forget to set up WarcraftLogs!`)
-                        }); 
+                        break;
+                    case '!affixDetails':
+                        getAffixes().then(res => {
+                            res.affix_details.forEach(affix => {
+                                message.channel.send(affix.name + ' : ' + affix.description)
+                            })
+                        })
+                        break;
+                    case '!char':
+                        message.channel.send('Please use the following format: !char [character name] [optional realm].')
+                        break;
+                    case '!guildRank':
+                        getRank().then(res => {
+                            message.channel.send('Grand Central Parkway is currently rank ' + res.realm_rank +' on Sargeras and ' + res.world_rank + ' in the world.')
+                        })
+                        break;
+                    case '!setReminder':
+                        // message.channel.send('Please use the format: !setReminder [time (24 hour time)] [date (optional)]')
+                        break;
+                    case '!enableLogReminder':
                         if(schedule.scheduledJobs["warcraftlogs reminder"]){
-                            message.channel.send('WarcraftLog Reminder successfully scheduled!')
-                        }
-                    }
-                    break;
-                case '!disableLogReminder':
-                    if(schedule.scheduledJobs["warcraftlogs reminder"]){
-                        schedule.scheduledJobs["warcraftlogs reminder"].cancel()
-                        if(!schedule.scheduledJobs["warcraftlogs reminder"]){
-                            message.channel.send('WarcraftLog reminder is cancelled!')
+                            message.channel.send('WarcraftLog Reminder is already scheduled!')
                         }
                         else{
-                            message.channel.send("Failed to cancel WarcraftLog Reminder!")
-                        }
-                    }
-                    else{
-                        message.channel.send("Warcraftlog reminder has already been disabled!")
-                    }
-                    break;
-                case '!daylightSavings':
-                    message.channel.send(`Daylight Savings is currently ${daylightSavings ? "on" : "off"}`)
-                    break;
-                case '!daylightSavingsOn':
-                    if(daylightSavings){
-                        message.channel.send("Daylight Savings is already on")
-                    }
-                    else{
-                        daylightSavings = true
-                        message.channel.send(`Daylight Savings is has been set to ${daylightSavings ? "on" : "off"}`)
-                        if(schedule.scheduledJobs["warcraftlogs reminder"]){
-                            schedule.scheduledJobs["warcraftlogs reminder"].cancel()
                             schedule.scheduleJob("warcraftlogs reminder", rule, function(){
                                 client.channels.get(`648974529217036310`).send("Reminder: " + `<@&453698550174318623> Don't forget to set up WarcraftLogs!`)
                             }); 
@@ -241,131 +216,166 @@ client.on('message', message => {
                                 message.channel.send('WarcraftLog Reminder successfully scheduled!')
                             }
                         }
-                    }
-                    break;
-                case '!daylightSavingsOff':
-                    if(!daylightSavings){
-                        message.channel.send("Daylight Savings is already off")
-                    }
-                    else{
-                       daylightSavings = false
-                       message.channel.send(`Daylight Savings is has been set to ${daylightSavings ? "on" : "off"}`)
-                       if(schedule.scheduledJobs["warcraftlogs reminder"]){
+                        break;
+                    case '!disableLogReminder':
+                        if(schedule.scheduledJobs["warcraftlogs reminder"]){
                             schedule.scheduledJobs["warcraftlogs reminder"].cancel()
-                            schedule.scheduleJob("warcraftlogs reminder", rule, function(){
-                                client.channels.get(`648974529217036310`).send("Reminder: " + `<@&453698550174318623> Don't forget to set up WarcraftLogs!`)
-                        });
-                            if(schedule.scheduledJobs["warcraftlogs reminder"]){
-                                message.channel.send('WarcraftLog Reminder successfully scheduled!')
+                            if(!schedule.scheduledJobs["warcraftlogs reminder"]){
+                                message.channel.send('WarcraftLog reminder is cancelled!')
+                            }
+                            else{
+                                message.channel.send("Failed to cancel WarcraftLog Reminder!")
                             }
                         }
-                    }
-                    break;
-                default:
-                    readJson()
-                    if(dictionary[channel_id][message.content]){
-                        message.channel.send(dictionary[channel_id][message.content])
-                    }
-                    break;
-            }
-        }
-        if(messageArray.length === 2){
-            readJson()
-            newServerIdCheck(channel_id)
-            switch(messageArray[0]){
-                case '!newKeyword':
-                    message.channel.send('Please use the following format: !newKeyword [keyword here] [corresponding value here].')
-                    break;
-                case '!editKeyword':
-                    message.channel.send('Please use the following format: !editKeyword [keyword here] [updated value here].')
-                    break;
-                case '!deleteKeyword':
-                    if(dictionary[channel_id][messageArray[1]]){
-                        delete dictionary[channel_id][messageArray[1]]
-                        writeJson(dictionary)
-                        message.channel.send("Keyword has been removed from the database!")
-                    }
-                    else{
-                        message.channel.send("That keyword could not be found in the database.")
-                    }
-                    break;
-                case '!char':
-                    console.log("two args")
-                    getChar(messageArray[1]).then(res => {
-                        console.log(res)
-                        if(res.statusCode === 400){
-                            message.channel.send("YOU DONE FUCKED UP A A RON. Character doesn't exist!")
+                        else{
+                            message.channel.send("Warcraftlog reminder has already been disabled!")
+                        }
+                        break;
+                    case '!daylightSavings':
+                        message.channel.send(`Daylight Savings is currently ${daylightSavings ? "on" : "off"}`)
+                        break;
+                    case '!daylightSavingsOn':
+                        if(daylightSavings){
+                            message.channel.send("Daylight Savings is already on")
                         }
                         else{
-                            message.channel.send(res.name + ' - ' + res.realm)
-                            message.channel.send(res.race + ' ' + res.class + ': ' + res.active_spec_name)
-                            message.channel.send('Equipped ilvl is ' + res.gear.item_level_equipped)
-                            message.channel.send('Current Raider.io score is ' + res.mythic_plus_scores_by_season[0].scores.all)
-                            message.channel.send('Last Updated at ' + moment(res.last_crawled_at).format('MMMM Do YYYY, h:mm:ss a'));
+                            daylightSavings = true
+                            message.channel.send(`Daylight Savings is has been set to ${daylightSavings ? "on" : "off"}`)
+                            if(schedule.scheduledJobs["warcraftlogs reminder"]){
+                                schedule.scheduledJobs["warcraftlogs reminder"].cancel()
+                                schedule.scheduleJob("warcraftlogs reminder", rule, function(){
+                                    client.channels.get(`648974529217036310`).send("Reminder: " + `<@&453698550174318623> Don't forget to set up WarcraftLogs!`)
+                                }); 
+                                if(schedule.scheduledJobs["warcraftlogs reminder"]){
+                                    message.channel.send('WarcraftLog Reminder successfully scheduled!')
+                                }
+                            }
                         }
-                    })
-                    break;
-                case '!setReminder':
-                    //!setReminder [what] [when (optional)]
-
-                    // let today = new Date();
-                    // let date = (today.getMonth()+1) +'-'+ today.getDate() +'-'+ today.getFullYear()
-                    // console.log(date)
-                    message.channel.send("This is currently in development :)")
-
-                    break;
-            }
-        }
-        if(messageArray.length === 3){
-            readJson()
-            newServerIdCheck(channel_id)
-            switch(messageArray[0]){
-                case '!newKeyword':
-                    if(messageArray[1][0] !== '!'){
-                        message.channel.send("Please start the new keyword with '!' ")
-                    }
-                    else{
-                        if(dictionary[channel_id][messageArray[1]]){
-                            message.channel.send("Keyword is already in use! Please try another keyword or use '!editKeyword' to modify an existing entry.")
+                        break;
+                    case '!daylightSavingsOff':
+                        if(!daylightSavings){
+                            message.channel.send("Daylight Savings is already off")
                         }
                         else{
-                            dictionary[channel_id][messageArray[1]] = messageArray[2]
-                            writeJson(dictionary)
-                            message.channel.send("Keyword has been added to the database!")
+                           daylightSavings = false
+                           message.channel.send(`Daylight Savings is has been set to ${daylightSavings ? "on" : "off"}`)
+                           if(schedule.scheduledJobs["warcraftlogs reminder"]){
+                                schedule.scheduledJobs["warcraftlogs reminder"].cancel()
+                                schedule.scheduleJob("warcraftlogs reminder", rule, function(){
+                                    client.channels.get(`648974529217036310`).send("Reminder: " + `<@&453698550174318623> Don't forget to set up WarcraftLogs!`)
+                            });
+                                if(schedule.scheduledJobs["warcraftlogs reminder"]){
+                                    message.channel.send('WarcraftLog Reminder successfully scheduled!')
+                                }
+                            }
                         }
-                    }
-                    break;
-                case '!editKeyword':
-                    if(messageArray[1][0] !== '!'){
-                        message.channel.send("Please start the new keyword with '!' ")
-                    }
-                    else{
+                        break;
+                    default:
+                        readJson()
+                        if(dictionary[channel_id][message.content]){
+                            message.channel.send(dictionary[channel_id][message.content])
+                        }
+                        break;
+                }
+            }
+            if(messageArray.length === 2){
+                readJson()
+                newServerIdCheck(channel_id)
+                switch(messageArray[0]){
+                    case '!newKeyword':
+                        message.channel.send('Please use the following format: !newKeyword [keyword here] [corresponding value here].')
+                        break;
+                    case '!editKeyword':
+                        message.channel.send('Please use the following format: !editKeyword [keyword here] [updated value here].')
+                        break;
+                    case '!deleteKeyword':
                         if(dictionary[channel_id][messageArray[1]]){
-                            dictionary[channel_id][messageArray[1]] = messageArray[2]
+                            delete dictionary[channel_id][messageArray[1]]
                             writeJson(dictionary)
-                            message.channel.send("Keyword has been updated!")
+                            message.channel.send("Keyword has been removed from the database!")
                         }
                         else{
                             message.channel.send("That keyword could not be found in the database.")
                         }
-                    }
-                    break;
-                case '!char':
-                    console.log('3 args')
-                    getChar(messageArray[1], messageArray[2]).then(res => {
-                        console.log(res)
-                        if(res.statusCode === 400){
-                            message.channel.send("YOU DONE FUCKED UP A A RON. Character doesn't exist!")
+                        break;
+                    case '!char':
+                        console.log("two args")
+                        getChar(messageArray[1]).then(res => {
+                            console.log(res)
+                            if(res.statusCode === 400){
+                                message.channel.send("YOU DONE FUCKED UP A A RON. Character doesn't exist!")
+                            }
+                            else{
+                                message.channel.send(res.name + ' - ' + res.realm)
+                                message.channel.send(res.race + ' ' + res.class + ': ' + res.active_spec_name)
+                                message.channel.send('Equipped ilvl is ' + res.gear.item_level_equipped)
+                                message.channel.send('Current Raider.io score is ' + res.mythic_plus_scores_by_season[0].scores.all)
+                                message.channel.send('Last Updated at ' + moment(res.last_crawled_at).format('MMMM Do YYYY, h:mm:ss a'));
+                            }
+                        })
+                        break;
+                    case '!setReminder':
+                        //!setReminder [what] [when (optional)]
+    
+                        // let today = new Date();
+                        // let date = (today.getMonth()+1) +'-'+ today.getDate() +'-'+ today.getFullYear()
+                        // console.log(date)
+                        message.channel.send("This is currently in development :)")
+    
+                        break;
+                }
+            }
+            if(messageArray.length === 3){
+                readJson()
+                newServerIdCheck(channel_id)
+                switch(messageArray[0]){
+                    case '!newKeyword':
+                        if(messageArray[1][0] !== '!'){
+                            message.channel.send("Please start the new keyword with '!' ")
                         }
                         else{
-                            message.channel.send(res.name + ' - ' + res.realm)
-                            message.channel.send(res.race + ' ' + res.class + ': ' + res.active_spec_name)
-                            message.channel.send('Equipped ilvl is ' + res.gear.item_level_equipped + ' with cloak rank ' + res.gear.corruption.cloakRank)
-                            message.channel.send('Current Raider.io score is ' + res.mythic_plus_scores_by_season[0].scores.all)
-                            message.channel.send('Last Updated at ' + moment(res.last_crawled_at).format('MMMM Do YYYY, h:mm:ss a'));
+                            if(dictionary[channel_id][messageArray[1]]){
+                                message.channel.send("Keyword is already in use! Please try another keyword or use '!editKeyword' to modify an existing entry.")
+                            }
+                            else{
+                                dictionary[channel_id][messageArray[1]] = messageArray[2]
+                                writeJson(dictionary)
+                                message.channel.send("Keyword has been added to the database!")
+                            }
                         }
-                    })
-                    break;
+                        break;
+                    case '!editKeyword':
+                        if(messageArray[1][0] !== '!'){
+                            message.channel.send("Please start the new keyword with '!' ")
+                        }
+                        else{
+                            if(dictionary[channel_id][messageArray[1]]){
+                                dictionary[channel_id][messageArray[1]] = messageArray[2]
+                                writeJson(dictionary)
+                                message.channel.send("Keyword has been updated!")
+                            }
+                            else{
+                                message.channel.send("That keyword could not be found in the database.")
+                            }
+                        }
+                        break;
+                    case '!char':
+                        console.log('3 args')
+                        getChar(messageArray[1], messageArray[2]).then(res => {
+                            console.log(res)
+                            if(res.statusCode === 400){
+                                message.channel.send("YOU DONE FUCKED UP A A RON. Character doesn't exist!")
+                            }
+                            else{
+                                message.channel.send(res.name + ' - ' + res.realm)
+                                message.channel.send(res.race + ' ' + res.class + ': ' + res.active_spec_name)
+                                message.channel.send('Equipped ilvl is ' + res.gear.item_level_equipped + ' with cloak rank ' + res.gear.corruption.cloakRank)
+                                message.channel.send('Current Raider.io score is ' + res.mythic_plus_scores_by_season[0].scores.all)
+                                message.channel.send('Last Updated at ' + moment(res.last_crawled_at).format('MMMM Do YYYY, h:mm:ss a'));
+                            }
+                        })
+                        break;
+                }
             }
         }
     }
