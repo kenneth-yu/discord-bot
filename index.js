@@ -240,7 +240,7 @@ client.on('message', message => {
                         }
                         else{
                             daylightSavings = true
-                            message.channel.send(`Daylight Savings is has been set to ${daylightSavings ? "on" : "off"}`)
+                            message.channel.send(`Daylight Savings has been set to ${daylightSavings ? "on" : "off"}`)
                             if(schedule.scheduledJobs["warcraftlogs reminder"]){
                                 schedule.scheduledJobs["warcraftlogs reminder"].cancel()
                                 schedule.scheduleJob("warcraftlogs reminder", rule, function(){
@@ -258,7 +258,7 @@ client.on('message', message => {
                         }
                         else{
                            daylightSavings = false
-                           message.channel.send(`Daylight Savings is has been set to ${daylightSavings ? "on" : "off"}`)
+                           message.channel.send(`Daylight Savings has been set to ${daylightSavings ? "on" : "off"}`)
                            if(schedule.scheduledJobs["warcraftlogs reminder"]){
                                 schedule.scheduledJobs["warcraftlogs reminder"].cancel()
                                 schedule.scheduleJob("warcraftlogs reminder", rule, function(){
