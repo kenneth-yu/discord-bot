@@ -271,7 +271,9 @@ client.on('message', message => {
                         }
                         break;
                     case '!time':
-                        message.channel.send(`${new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })} EST`)
+                        message.channel.send(`${moment().zone('-0400').format('LT')} EST`)
+                        break;
+                    case '!nextRaid':
                         break;
                     default:
                         readJson()
