@@ -270,6 +270,9 @@ client.on('message', message => {
                             }
                         }
                         break;
+                    case '!time':
+                        message.channel.send(`${new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })} EST`)
+                        break;
                     default:
                         readJson()
                         if(dictionary[channel_id][message.content]){
