@@ -106,7 +106,10 @@ const timeUntilRaid = () => {
         d += 1 
         h -= 24
     }
-    return `The time until our next raid is ${d} Days, ${h} Hours, ${m} Minutes, and ${s} Seconds`
+    let days = d === 0 ? "" : `${d} Days, `
+    let hours = d === 0 && h === 0 ? "" : `${h} Hours, `
+    let minutes = d === 0 && h === 0 && m === 0 ? "" : `${m} Minutes, `
+    return `The time until our next raid is ${days}${hours}${minutes}and ${s} Seconds.`
   }
 //Helper Functions END -----------------------------------------------------------------------------------------------
 
