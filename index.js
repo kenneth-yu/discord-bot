@@ -7,6 +7,7 @@ const moment = require('moment');
 let fs = require('fs')
 let dictionary 
 let daylightSavings = false;
+let raidScheduled = true;
 
 client.on('error', (err) => {
     console.log(err.message)
@@ -101,10 +102,16 @@ const timeUntilRaid = () => {
     let s = (ms % 6e4)    / 1e3 | 0;
     
     // Return remaining 
-    h = daylightSavings ? h+5 : h+4
+    h = daylightSavings ? h+4 : h+3
     if(h > 24){
         d += 1 
         h -= 24
+    }
+    if(m < 0){
+        m = 60 + m
+    }
+    if(s < 0){
+        s = 60 + s
     }
     let days = d === 0 ? "" : `${d} Days, `
     let hours = d === 0 && h === 0 ? "" : `${h} Hours, `
@@ -322,10 +329,16 @@ client.on('message', message => {
                         }
                         break;
                     case '!time':
-                        message.channel.send(`${moment().zone('-0400').format('LT')} EST`)
+                        message.channel.send(`It is currently ${moment().zone('-0400').format('LT')} EST`)
                         break;
                     case '!nextRaid':
-                        message.channel.send(timeUntilRaid())
+                        raidScheduled ? 
+                        message.channel.send(timeUntilRaid()) : 
+                        message.channel.send("Seems like there is no recurring raid scheduled :slight_frown: See you when new content drops!")
+                        break;
+                    case '!nextRaidToggle':
+                        raidScheduled ? message.channel.send("recurring !nextRaid is now off") : message.channel.send("recurring !nextRaid is now on")
+                        raidScheduled = !raidScheduled
                         break;
                     default:
                         readJson()
