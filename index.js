@@ -101,7 +101,9 @@ const timeUntilRaid = () => {
     let s = (ms % 6e4)    / 1e3 | 0;
     
     // Return remaining 
-    h = daylightSavings ? h+4 : h+3
+    //9:00PM EST is 01:00 UTC w/ Daylight Savings - 4 Hour Difference
+    //9:00PM EST is 02:00 UTC w/o Daylight Savings - 5 Hour Difference
+    h = daylightSavings ? h+5 : h+4
     if(h > 24){
         d += 1 
         h -= 24
