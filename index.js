@@ -80,15 +80,14 @@ const timeUntilRaid = () => {
             if(nextRaidDay === dayNum){
                 daysToRaid = 0
             }
-            else if(nextRaidDay < dayNum){
-                daysToRaid = dayNum - nextRaidDay
-            }
-            else{
-                daysToRaid = nextRaidDay - dayNum
-            }
+            
         }
-
-    } 
+    } else if(nextRaidDay < dayNum){
+        daysToRaid = dayNum - nextRaidDay
+    }
+    else{
+        daysToRaid = nextRaidDay - dayNum
+    }
     
     // Get milliseconds to raid time
     let raidTime = new Date(+today);
