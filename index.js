@@ -62,37 +62,44 @@ const argCompiler = (messageArray, arg2, arg3) => {
     console.log(messageArray)
 }
 const timeUntilRaid = () => {
-
     // Get current date and time
     let today = new Date();
   
     // Get number of days to Raid Day
     let dayNum = today.getDay();
-    let nextRaidDay = 0
+    let nextRaidDay = 3
     let daysToRaid = 0
-    if(dayNum === 3){
-        if(today.getHours() < 21 && today.getMinutes() < 59 && today.getSeconds() < 59){
+    //9:00PM EST is 01:00 UTC w/ Daylight Savings - 4 Hour Difference
+    //9:00PM EST is 02:00 UTC w/o Daylight Savings - 5 Hour Difference
+    let raidTimeUTC = daylightSavings ? 2 : 1
+    if(dayNum === 3){ //Handles Wednesday(3)
+        if(today.getHours() < raidTimeUTC && today.getMinutes() < 59 && today.getSeconds() < 59){
             nextRaidDay = 3
             daysToRaid = 0
         }
         else{
             nextRaidDay = 4
-            if(nextRaidDay === dayNum){
+            daysToRaid = 0  
+        }
+    } 
+    else{
+        if(dayNum > 3){ //Handles Thursday (4) to Saturday(6)
+            if(dayNum === 4 && today.getHours() < raidTimeUTC && today.getMinutes() < 59 && today.getSeconds() < 59){
+                nextRaidDay = 4
                 daysToRaid = 0
             }
-            
+            else{
+                daysToRaid = 7 - dayNum + nextRaidDay
+            }
         }
-    } else if(nextRaidDay < dayNum){
-        daysToRaid = dayNum - nextRaidDay
+        else if (dayNum < 3){ //Handles Sunday(0) to Tuesday(2)
+            daysToRaid = nextRaidDay - dayNum
+        }
     }
-    else{
-        daysToRaid = nextRaidDay - dayNum
-    }
-    
     // Get milliseconds to raid time
     let raidTime = new Date(+today);
     raidTime.setDate(raidTime.getDate() + daysToRaid);
-    raidTime.setHours(21,0,0,0);
+    raidTime.setHours(raidTimeUTC,0,0,0);
     // Round up ms remaining so seconds remaining matches clock
     let ms = Math.ceil((raidTime - today)/1000)*1000;
     let d =  ms / 8.64e7 | 0;
@@ -100,24 +107,10 @@ const timeUntilRaid = () => {
     let m = (ms % 3.6e6)  / 6e4 | 0;
     let s = (ms % 6e4)    / 1e3 | 0;
     
-    // Return remaining 
-    //9:00PM EST is 01:00 UTC w/ Daylight Savings - 4 Hour Difference
-    //9:00PM EST is 02:00 UTC w/o Daylight Savings - 5 Hour Difference
-    h = daylightSavings ? h+5 : h+4
-    if(h > 24){
-        d += 1 
-        h -= 24
-    }
-    if(m < 0){
-        m = 60 + m
-    }
-    if(s < 0){
-        s = 60 + s
-    }
     let days = d === 0 ? "" : `${d} Days, `
     let hours = d === 0 && h === 0 ? "" : `${h} Hours, `
     let minutes = d === 0 && h === 0 && m === 0 ? "" : `${m} Minutes, `
-    return `Our next raid is ${days}${hours}${minutes}and ${s} Seconds.`
+    return `Our next raid is in ${days}${hours}${minutes}and ${s} Seconds.`
   }
 //Helper Functions END -----------------------------------------------------------------------------------------------
 
