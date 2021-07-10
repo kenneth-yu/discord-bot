@@ -67,33 +67,34 @@ const timeUntilRaid = () => {
   
     // Get number of days to Raid Day
     let dayNum = today.getDay();
-    let nextRaidDay = 3
+    //In EST our raid times are Wed/Thur at 9PM. In UTC it is Thur/Fri at 1/2AM
+    let nextRaidDay = 4
     let daysToRaid = 0
+    //9:00PM EST is 00:00 UTC w/o Daylight Savings - 5 Hour Difference
     //9:00PM EST is 01:00 UTC w/ Daylight Savings - 4 Hour Difference
-    //9:00PM EST is 02:00 UTC w/o Daylight Savings - 5 Hour Difference
-    let raidTimeUTC = daylightSavings ? 2 : 1
-    if(dayNum === 3){ //Handles Wednesday(3)
+    let raidTimeUTC = daylightSavings ? 1 : 0
+    if(dayNum === 4){ //Handles Wednesday(3) EST or Thursday(4) UTC
         if(today.getHours() < raidTimeUTC && today.getMinutes() < 59 && today.getSeconds() < 59){
-            nextRaidDay = 3
+            nextRaidDay = 4
             daysToRaid = 0
         }
         else{
-            nextRaidDay = 4
+            nextRaidDay = 5
             daysToRaid = 0  
         }
     } 
     else{
-        if(dayNum > 3){ //Handles Thursday (4) to Saturday(6)
-            if(dayNum === 4 && today.getHours() < raidTimeUTC && today.getMinutes() < 59 && today.getSeconds() < 59){
-                nextRaidDay = 4
+        if(dayNum > 4){ //Handles Friday (5) to Saturday(6)
+            if(dayNum === 5 && today.getHours() < raidTimeUTC && today.getMinutes() < 59 && today.getSeconds() < 59){
+                nextRaidDay = 5
                 daysToRaid = 0
             }
             else{
                 daysToRaid = 7 - dayNum + nextRaidDay
             }
         }
-        else if (dayNum < 3){ //Handles Sunday(0) to Tuesday(2)
-            daysToRaid = nextRaidDay - dayNum
+        else if (dayNum < 4){ //Handles Sunday(0) to Wednesday(3)
+            daysToRaid = 1 + nextRaidDay - dayNum
         }
     }
     // Get milliseconds to raid time
@@ -106,7 +107,7 @@ const timeUntilRaid = () => {
     let h = (ms % 8.64e7) / 3.6e6 | 0;
     let m = (ms % 3.6e6)  / 6e4 | 0;
     let s = (ms % 6e4)    / 1e3 | 0;
-    
+
     let days = d === 0 ? "" : `${d} Days, `
     let hours = d === 0 && h === 0 ? "" : `${h} Hours, `
     let minutes = d === 0 && h === 0 && m === 0 ? "" : `${m} Minutes, `
@@ -171,11 +172,11 @@ client.once('ready', () => {
 })
 
 //remember that node-scheduler uses GMT/UTC
+//9:00PM EST is 00:00 UTC w/o Daylight Savings - 5 Hour Difference
 //9:00PM EST is 01:00 UTC w/ Daylight Savings - 4 Hour Difference
-//9:00PM EST is 02:00 UTC w/o Daylight Savings - 5 Hour Difference
 var rule = new schedule.RecurrenceRule();
 rule.dayOfWeek = [new schedule.Range(4, 5)];
-rule.hour =  daylightSavings ? 1 : 2;
+rule.hour =  daylightSavings ? 1 : 0;
 rule.minute = 0;
 
 //By default schedule warcraft log reminders
