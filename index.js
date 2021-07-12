@@ -94,7 +94,7 @@ const timeUntilRaid = () => {
             }
         }
         else if (dayNum < 4){ //Handles Sunday(0) to Wednesday(3)
-            daysToRaid = 1 + nextRaidDay - dayNum
+            daysToRaid = dayNum === 0 ? 1 + nextRaidDay - dayNum : nextRaidDay - dayNum
         }
     }
     // Get milliseconds to raid time
@@ -107,7 +107,7 @@ const timeUntilRaid = () => {
     let h = (ms % 8.64e7) / 3.6e6 | 0;
     let m = (ms % 3.6e6)  / 6e4 | 0;
     let s = (ms % 6e4)    / 1e3 | 0;
-
+    
     let days = d === 0 ? "" : `${d} Days, `
     let hours = d === 0 && h === 0 ? "" : `${h} Hours, `
     let minutes = d === 0 && h === 0 && m === 0 ? "" : `${m} Minutes, `
