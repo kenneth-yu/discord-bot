@@ -37,8 +37,6 @@ const writeJson = (newDictionary) => {
 
 //Helper Functions -----------------------------------------------------------------------------------------------
 const newServerIdCheck = (dictionary, channel_id) => {
-    console.log(dictionary, "NEW SEVER ID CHECK FUNCTION")
-    console.log(channel_id)
     if(!dictionary[channel_id]){
         dictionary[channel_id] = {}
     }

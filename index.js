@@ -18,20 +18,19 @@ let dictionary
 let daylightSavings = false;
 let raidScheduled = true;
 
-
 client.on('error', (err) => {
     console.log(err.message)
 });
 
 // Use the BnetStrategy within Passport.
-passport.use(new BnetStrategy({
-    clientID: BNET_ID,
-    clientSecret: BNET_SECRET,
-    callbackURL: "https://localhost:3000/auth/bnet/callback",
-    region: "us"
-}, function(accessToken, refreshToken, profile, done) {
-    return done(null, profile);
-}));
+// passport.use(new BnetStrategy({
+//     clientID: BNET_ID,
+//     clientSecret: BNET_SECRET,
+//     callbackURL: "https://localhost:3000/auth/bnet/callback",
+//     region: "us"
+// }, function(accessToken, refreshToken, profile, done) {
+//     return done(null, accessToken);
+// }));
 
 // https://us.api.blizzard.com
 // JSON Read/Write --------------------------------------------------------------------------------------------
@@ -244,22 +243,24 @@ client.on('message', message => {
                         raidScheduled ? message.channel.send("recurring !nextRaid is now off") : message.channel.send("recurring !nextRaid is now on")
                         raidScheduled = !raidScheduled
                         break;
-                    case '!test':
-                        console.log("im in serverStatus")
-                        message.channel.send('im trying to do something')
-                        // app.get('/auth/bnet',
-                        //     passport.authenticate('bnet'));
-                        
-                        // app.get('/auth/bnet/callback',
-                        //     passport.authenticate('bnet', { failureRedirect: '/' }),
-                        //     function(req, res){
-                        //         res.redirect('/');
-                        //     });
-                        
-                        app.get('/wow/realm/status',(req, res)=>{
-                            passport.authenticate('bnet')
-                            console.log(res)
-                        });
+                    case '!serverStatus':
+                        let serverStatusChecker = (firstCall = true) => {
+                            fetchHelper.createAccessToken(BNET_ID, BNET_SECRET, region = 'us').then(res => {
+                                fetchHelper.getRealmStatus(res.access_token).then(res => {
+                                    if(res.status.type === 'UP'){
+                                        message.channel.send(`<@${message.author.id}> Sargeras is up! :white_check_mark:`)
+                                    }
+                                    else{
+                                        if(firstCall === true){
+                                            message.channel.send('Sargearas is down  :x:')
+                                            message.channel.send(`<@${message.author.id}> I'll ping you when the server is up!`)
+                                        }
+                                        setTimeout(() => serverStatusChecker(false), 60000)
+                                    }
+                                })
+                            })
+                        }
+                        serverStatusChecker()
                         break;
                     default:
                         readJson()
