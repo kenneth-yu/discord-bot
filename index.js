@@ -11,6 +11,7 @@ var BNET_SECRET = config.BNET_SECRET
 
 let fs = require('fs')
 let dictionary 
+let serverStatusPing = {};
 let daylightSavings = false;
 let raidScheduled = true;
 
@@ -18,8 +19,6 @@ client.on('error', (err) => {
     console.log(err.message)
 });
 
-
-// https://us.api.blizzard.com
 // JSON Read/Write --------------------------------------------------------------------------------------------
 const readJson = () => {
     fs.readFile('./dictionary.json', 'utf8', (err, jsonString) => {
@@ -235,14 +234,33 @@ client.on('message', message => {
                             fetchHelper.createAccessToken(BNET_ID, BNET_SECRET, region = 'us').then(res => {
                                 fetchHelper.getRealmStatus(res.access_token).then(res => {
                                     if(res.status.type === 'UP'){
-                                        message.channel.send(`<@${message.author.id}> Sargeras is up! :white_check_mark:`)
+                                        let userString = ''
+                                        Object.keys(serverStatusPing).forEach(user => userString += `<@${user}> ` )
+                                        message.channel.send(`${userString}Sargeras is up! :white_check_mark:`)
+                                        serverStatusPing = {}
                                     }
                                     else{
                                         if(firstCall === true){
                                             message.channel.send('Sargearas is down  :x:')
-                                            message.channel.send(`<@${message.author.id}> I'll ping you when the server is up!`)
+                                            if(serverStatusPing[message.author.id]){
+                                                message.channel.send("You're already signed up for a ping when Sargeras comes online.")
+                                            }else{
+                                                if(Object.keys(serverStatusPing).length > 0){
+                                                    //Someone has already started serverStatusChecker
+                                                    serverStatusPing[message.author.id] = message.author.id
+                                                    message.channel.send(`<@${message.author.id}> I'll ping you when the server is up!`)
+                                                }else{
+                                                    //Nobody has started serverStatusChecker
+                                                    serverStatusPing[message.author.id] = message.author.id
+                                                    message.channel.send(`<@${message.author.id}> I'll ping you when the server is up!`)
+                                                    setTimeout(() => serverStatusChecker(false), 45000)
+                                                }
+                                            }
                                         }
-                                        setTimeout(() => serverStatusChecker(false), 60000)
+                                        else{
+                                            //Recursive call that ends when server is 'UP'
+                                            setTimeout(() => serverStatusChecker(false), 45000)
+                                        }
                                     }
                                 })
                             })
