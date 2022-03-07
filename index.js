@@ -6,13 +6,9 @@ const moment = require('moment');
 const helper = require('./helper.js')
 const fetchHelper = require('./fetchHelper.js')
 
-var express = require('express');
-var passport = require('passport')
-var BnetStrategy = require('passport-bnet').Strategy;
 var BNET_ID = config.BNET_ID
 var BNET_SECRET = config.BNET_SECRET
 
-var app = express();
 let fs = require('fs')
 let dictionary 
 let daylightSavings = false;
@@ -22,15 +18,6 @@ client.on('error', (err) => {
     console.log(err.message)
 });
 
-// Use the BnetStrategy within Passport.
-// passport.use(new BnetStrategy({
-//     clientID: BNET_ID,
-//     clientSecret: BNET_SECRET,
-//     callbackURL: "https://localhost:3000/auth/bnet/callback",
-//     region: "us"
-// }, function(accessToken, refreshToken, profile, done) {
-//     return done(null, accessToken);
-// }));
 
 // https://us.api.blizzard.com
 // JSON Read/Write --------------------------------------------------------------------------------------------
