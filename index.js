@@ -12,6 +12,8 @@ var BNET_SECRET = config.BNET_SECRET
 let fs = require('fs')
 let dictionary 
 let serverStatusPing = {};
+// DST true pulls the time back by 1 hour
+// DST false pushes the time forward by 1 hour
 let daylightSavings = false;
 let raidScheduled = true;
 
@@ -219,6 +221,9 @@ client.on('message', message => {
                         break;
                     case '!time':
                         message.channel.send(`It is currently ${moment().utcOffset(daylightSavings ? -5 : -4).format('LT')} EST`)
+                        break;
+                    case '!date': 
+                        message.channel.send(moment().utcOffset(daylightSavings ? -5 : -4).format('LL'))
                         break;
                     case '!nextRaid':
                         raidScheduled ? 
