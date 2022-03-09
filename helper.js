@@ -65,7 +65,7 @@ const timeUntilRaid = (daylightSavings) => {
     //9:00PM EST is 01:00 UTC w/ Daylight Savings - 4 Hour Difference
     let raidTimeUTC = daylightSavings ? 2 : 1
     if(dayNum === 4){ //Handles Wednesday(3) EST or Thursday(4) UTC
-        if(today.getHours() < raidTimeUTC && today.getMinutes() < 59 && tday.getSeconds() < 59){
+        if(today.getHours() < raidTimeUTC && today.getMinutes() < 59 && today.getSeconds() < 59){
             nextRaidDay = 4
             daysToRaid = 0
         }
@@ -106,6 +106,39 @@ const timeUntilRaid = (daylightSavings) => {
     let minutes = d === 0 && h === 0 && m === 0 ? "" : `${m} Minutes, `
     return `Our next raid is in ${days}${hours}${minutes}and ${s} Seconds.`
   }
+
+const checkDST = () => {
+    const stdTimezoneOffset = () => {
+        var jan = new Date(0, 1)
+        var jul = new Date(6, 1)
+        return Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset())
+    }
+
+    var today = new Date()
+
+    const isDstObserved = (today) => {
+        return today.getTimezoneOffset() < stdTimezoneOffset()
+    }
+
+    if (isDstObserved(today)) {
+        return -4
+    } else {
+        return -5
+    }
+}
+
+const rescheduleWclReminder = (schedule, rule, client, message) =>{
+    if(schedule.scheduledJobs["warcraftlogs reminder"]){
+        schedule.scheduledJobs["warcraftlogs reminder"].cancel()
+        schedule.scheduleJob("warcraftlogs reminder", rule, function(){
+            client.channels.get(`648974529217036310`).send("Reminder: " + `<@&453698550174318623> Don't forget to set up WarcraftLogs!`)
+    });
+        if(schedule.scheduledJobs["warcraftlogs reminder"]){
+            message.channel.send('WarcraftLog Reminder successfully scheduled!')
+        }
+    }
+}
+
 //Helper Functions END -----------------------------------------------------------------------------------------------
 
 
@@ -115,3 +148,5 @@ exports.writeJson = writeJson;
 exports.newServerIdCheck = newServerIdCheck;
 exports.argCompiler = argCompiler;
 exports.timeUntilRaid = timeUntilRaid;
+exports.checkDST = checkDST;
+exports.rescheduleWclReminder = rescheduleWclReminder;
