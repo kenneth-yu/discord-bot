@@ -12,9 +12,7 @@ var BNET_SECRET = config.BNET_SECRET
 let fs = require('fs')
 let dictionary 
 let serverStatusPing = {};
-// DST true pulls the time back by 1 hour
-// DST false pushes the time forward by 1 hour
-let daylightSavings = false;
+let daylightSavings = helper.checkDST() === -5 ? true : false
 let raidScheduled = true;
 
 client.on('error', (err) => {
@@ -60,8 +58,9 @@ client.once('ready', () => {
 })
 
 //remember that node-scheduler uses GMT/UTC
-//9:00PM EST is 00:00 UTC w/o Daylight Savings - 5 Hour Difference
+//9:00PM EST is 02:00 UTC w/o Daylight Savings - 5 Hour Difference
 //9:00PM EST is 01:00 UTC w/ Daylight Savings - 4 Hour Difference
+//Warcraft Log Reminder -------------------------------------------------------------------------------------------------------
 var rule = new schedule.RecurrenceRule();
 rule.dayOfWeek = [new schedule.Range(4, 5)];
 rule.hour =  daylightSavings ? 1 : 2;
@@ -71,8 +70,28 @@ rule.minute = 0;
 schedule.scheduleJob("warcraftlogs reminder", rule, function(){
     client.channels.get(`648974529217036310`).send("Reminder: " + `<@&453698550174318623> Don't forget to set up WarcraftLogs!`)
 }); 
+//Warcraft Log Reminder END -------------------------------------------------------------------------------------------------------
+//Check Daylight Savings ----------------------------------------------------------------------------------------------------------
+var checkDstRule = new schedule.RecurrenceRule();
+checkDstRule.hour = 8;
+
+schedule.scheduleJob("check daylight savings status", checkDstRule, function(){
+    let botTestingChannel = client.channels.get(`678287236239982593`)
+    botTestingChannel.send('Daylight Savings Status was automatically checked')
+    newDaylightSavings = helper.checkDST() === -5 ? true : false
+    if(daylightSavings !== newDaylightSavings){
+        botTestingChannel.send(`<@169835135804506112> Daylight Savings was ${daylightSavings} and has been updated to ${daylightSavings === true ? 'on' : 'off'}`)
+        daylightSavings = newDaylightSavings
+        helper.rescheduleWclReminder(schedule, rule, client, message)
+    }
+    else{
+        botTestingChannel.send(`Daylight Savings has is already ${daylightSavings === true ? 'on' : 'off'}. No changes are necessary.`)
+    }
+})
+//Check Daylight Savings END ---------------------------------------------------------------------------------------------------------
 
 client.on('message', message => {
+    // Parse DMs -------------------------------------------------------------------------------------------------------------------------
     if(message.channel.type === 'dm'){
         let suggestion_box_id = '459125119906873345' //suggestion-box channel id
         let general_id = '453697747930054658' //general channel id
@@ -103,7 +122,9 @@ client.on('message', message => {
                     break;
             }
         }
+    // Parse DMs END -------------------------------------------------------------------------------------------------------------------------   
     }else{
+        // Parse Discord Channels ------------------------------------------------------------------------------------------------------------
         if(message.content[0] === '!'){
             let channel_id = message.channel.guild.id
             var [arg1,arg2, ...arg3] = message.content.split(' ');
@@ -180,43 +201,40 @@ client.on('message', message => {
                             message.channel.send("Warcraftlog reminder has already been disabled!")
                         }
                         break;
-                    case '!daylightSavings':
+                    case '!dst':
                         message.channel.send(`Daylight Savings is currently ${daylightSavings ? "on" : "off"}`)
                         break;
-                    case '!daylightSavingsOn':
+                    case '!checkDst':
+                        newDaylightSavings = helper.checkDST() === -5 ? true : false
+                        if(daylightSavings !== newDaylightSavings){
+                            message.channel.send(`Daylight Savings was ${daylightSavings} and has been updated to ${daylightSavings === true ? 'on' : 'off'}`)
+                            daylightSavings = newDaylightSavings
+                            helper.rescheduleWclReminder(schedule, rule, client, message)
+                        }
+                        else{
+                            message.channel.send(`Daylight Savings has is already ${daylightSavings === true ? 'on' : 'off'}. No changes are necessary.`)
+                        }
+                        break;
+                    case '!dstOn':
+                        //manually override daylight savings to on
                         if(daylightSavings){
                             message.channel.send("Daylight Savings is already on")
                         }
                         else{
                             daylightSavings = true
                             message.channel.send(`Daylight Savings has been set to ${daylightSavings ? "on" : "off"}`)
-                            if(schedule.scheduledJobs["warcraftlogs reminder"]){
-                                schedule.scheduledJobs["warcraftlogs reminder"].cancel()
-                                schedule.scheduleJob("warcraftlogs reminder", rule, function(){
-                                    client.channels.get(`648974529217036310`).send("Reminder: " + `<@&453698550174318623> Don't forget to set up WarcraftLogs!`)
-                                }); 
-                                if(schedule.scheduledJobs["warcraftlogs reminder"]){
-                                    message.channel.send('WarcraftLog Reminder successfully scheduled!')
-                                }
-                            }
+                            helper.rescheduleWclReminder(schedule, rule, client, message)
                         }
                         break;
-                    case '!daylightSavingsOff':
+                    case '!dstOff':
+                        //manually override daylight savings to off
                         if(!daylightSavings){
                             message.channel.send("Daylight Savings is already off")
                         }
                         else{
                            daylightSavings = false
                            message.channel.send(`Daylight Savings has been set to ${daylightSavings ? "on" : "off"}`)
-                           if(schedule.scheduledJobs["warcraftlogs reminder"]){
-                                schedule.scheduledJobs["warcraftlogs reminder"].cancel()
-                                schedule.scheduleJob("warcraftlogs reminder", rule, function(){
-                                    client.channels.get(`648974529217036310`).send("Reminder: " + `<@&453698550174318623> Don't forget to set up WarcraftLogs!`)
-                            });
-                                if(schedule.scheduledJobs["warcraftlogs reminder"]){
-                                    message.channel.send('WarcraftLog Reminder successfully scheduled!')
-                                }
-                            }
+                           helper.rescheduleWclReminder(schedule, rule, client, message)
                         }
                         break;
                     case '!time':
@@ -301,9 +319,7 @@ client.on('message', message => {
                         }
                         break;
                     case '!char':
-                        console.log("two args")
                         fetchHelper.getChar(messageArray[1]).then(res => {
-                            console.log(res)
                             if(res.statusCode === 400){
                                 message.channel.send("YOU DONE FUCKED UP A A RON. Character doesn't exist!")
                             }
@@ -379,6 +395,7 @@ client.on('message', message => {
                         break;
                 }
             }
+        // Parse Discord Channels ------------------------------------------------------------------------------------------------------------
         }
     }
 })
