@@ -63,7 +63,7 @@ client.once('ready', () => {
 //Warcraft Log Reminder -------------------------------------------------------------------------------------------------------
 var rule = new schedule.RecurrenceRule();
 rule.dayOfWeek = [new schedule.Range(4, 5)];
-rule.hour =  daylightSavings ? 1 : 2;
+rule.hour =  daylightSavings ? 2 : 1;
 rule.minute = 0;
 
 //By default schedule warcraft log reminders
