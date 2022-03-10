@@ -74,6 +74,7 @@ schedule.scheduleJob("warcraftlogs reminder", rule, function(){
 //Check Daylight Savings ----------------------------------------------------------------------------------------------------------
 var checkDstRule = new schedule.RecurrenceRule();
 checkDstRule.hour = 8;
+checkDstRule.minute = 0;
 
 schedule.scheduleJob("check daylight savings status", checkDstRule, function(){
     let botTestingChannel = client.channels.get(`678287236239982593`)
