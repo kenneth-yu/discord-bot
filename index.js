@@ -213,7 +213,7 @@ client.on('message', message => {
                             helper.rescheduleWclReminder(schedule, rule, client, message)
                         }
                         else{
-                            message.channel.send(`Daylight Savings has is already ${daylightSavings === true ? 'on' : 'off'}. No changes are necessary.`)
+                            message.channel.send(`Daylight Savings is already ${daylightSavings === true ? 'on' : 'off'}. No changes are necessary.`)
                         }
                         break;
                     case '!dstOn':
