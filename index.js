@@ -86,7 +86,7 @@ schedule.scheduleJob("check daylight savings status", checkDstRule, function(){
         helper.rescheduleWclReminder(schedule, rule, client, message)
     }
     else{
-        botTestingChannel.send(`Daylight Savings has is already ${daylightSavings === true ? 'on' : 'off'}. No changes are necessary.`)
+        botTestingChannel.send(`Daylight Savings is already ${daylightSavings === true ? 'on' : 'off'}. No changes are necessary.`)
     }
 })
 //Check Daylight Savings END ---------------------------------------------------------------------------------------------------------
