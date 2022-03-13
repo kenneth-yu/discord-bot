@@ -107,36 +107,37 @@ const timeUntilRaid = (daylightSavings) => {
     return `Our next raid is in ${days}${hours}${minutes}and ${s} Seconds.`
   }
 
-const checkDST = () => {
-    //this will only work if local time is set on server
-    const stdTimezoneOffset = () => {
-        var jan = new Date(0, 1)
-        var jul = new Date(6, 1)
-        return Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset())
-    }
+// const checkDST = () => {
+//     //this will only work if local time is set on server
+//     const stdTimezoneOffset = () => {
+//         var jan = new Date(0, 1)
+//         var jul = new Date(6, 1)
+//         return Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset())
+//     }
 
-    var today = new Date()
+//     var today = new Date()
 
-    const isDstObserved = (today) => {
-        return today.getTimezoneOffset() < stdTimezoneOffset()
-    }
+//     const isDstObserved = (today) => {
+//         return today.getTimezoneOffset() < stdTimezoneOffset()
+//     }
 
-    if (isDstObserved(today)) {
-        return -4
-    } else {
-        return -5
-    }
-}
+//     if (isDstObserved(today)) {
+//         return -4
+//     } else {
+//         return -5
+//     }
+// }
 
 const rescheduleWclReminder = (schedule, rule, client, message) =>{
     if(schedule.scheduledJobs["warcraftlogs reminder"]){
         schedule.scheduledJobs["warcraftlogs reminder"].cancel()
-        schedule.scheduleJob("warcraftlogs reminder", rule, function(){
+       let newLogReminder = schedule.scheduleJob("warcraftlogs reminder", rule, function(){
             client.channels.get(`648974529217036310`).send("Reminder: " + `<@&453698550174318623> Don't forget to set up WarcraftLogs!`)
     });
         if(schedule.scheduledJobs["warcraftlogs reminder"]){
             message.channel.send('WarcraftLog Reminder successfully scheduled!')
         }
+        return newLogReminder
     }
 }
 
@@ -149,5 +150,5 @@ exports.writeJson = writeJson;
 exports.newServerIdCheck = newServerIdCheck;
 exports.argCompiler = argCompiler;
 exports.timeUntilRaid = timeUntilRaid;
-exports.checkDST = checkDST;
+// exports.checkDST = checkDST;
 exports.rescheduleWclReminder = rescheduleWclReminder;

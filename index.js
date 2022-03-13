@@ -12,7 +12,7 @@ var BNET_SECRET = config.BNET_SECRET
 let fs = require('fs')
 let dictionary 
 let serverStatusPing = {};
-let daylightSavings = helper.checkDST() === -5 ? true : false
+let daylightSavings = (new Date().getTimezoneOffset() / 60) === 5 ? true : false
 let raidScheduled = true;
 
 client.on('error', (err) => {
@@ -63,11 +63,12 @@ client.once('ready', () => {
 //Warcraft Log Reminder -------------------------------------------------------------------------------------------------------
 var rule = new schedule.RecurrenceRule();
 rule.dayOfWeek = [new schedule.Range(4, 5)];
-rule.hour =  daylightSavings ? 2 : 3;
+rule.hour =  21;
 rule.minute = 0;
 
 //By default schedule warcraft log reminders
-schedule.scheduleJob("warcraftlogs reminder", rule, function(){
+let wcLogReminder;
+wcLogReminder = schedule.scheduleJob("warcraftlogs reminder", rule, function(){
     client.channels.get(`648974529217036310`).send("Reminder: " + `<@&453698550174318623> Don't forget to set up WarcraftLogs!`)
 }); 
 //Warcraft Log Reminder END -------------------------------------------------------------------------------------------------------
@@ -78,12 +79,12 @@ checkDstRule.minute = 0;
 
 schedule.scheduleJob("check daylight savings status", checkDstRule, function(){
     let botTestingChannel = client.channels.get(`678287236239982593`)
-    botTestingChannel.send('Daylight Savings Status was automatically checked')
-    newDaylightSavings = helper.checkDST() === -5 ? true : false
+    botTestingChannel.send('Daylight Savings Status was automatically checked.')
+    newDaylightSavings = (new Date().getTimezoneOffset() / 60) === 5 ? true : false
     if(daylightSavings !== newDaylightSavings){
-        botTestingChannel.send(`<@169835135804506112> Daylight Savings was ${daylightSavings} and has been updated to ${daylightSavings === true ? 'on' : 'off'}`)
+        botTestingChannel.send(`<@169835135804506112> Daylight Savings was ${daylightSavings=== true ? 'on' : 'off'} and has been updated to ${newDaylightSavings === true ? 'on' : 'off'}`)
         daylightSavings = newDaylightSavings
-        helper.rescheduleWclReminder(schedule, rule, client, message)
+        wcLogReminder = helper.rescheduleWclReminder(schedule, rule, client, message)
     }
     else{
         botTestingChannel.send(`Daylight Savings is already ${daylightSavings === true ? 'on' : 'off'}. No changes are necessary.`)
@@ -135,21 +136,21 @@ client.on('message', message => {
             
             if(messageArray.length === 1){
                 helper.newServerIdCheck(dictionary, channel_id)
-                switch (message.content){
+                switch (message.content.toLowerCase()){
                     case '!suggest':
                         message.channel.send("You can send an anonymous message to the suggestion-box channel by direct messaging me !suggest [your message here]")
                         break;
                     case '!help':
                         message.channel.send("Hi, I can do accept keywords using !newKeyword, as well as !editKeyword and !deleteKeyword.")
                         break;
-                    case '!newKeyword':
+                    case '!newkeyword':
                         //!newKeyword [key] [value]
                         message.channel.send('Please use the following format: !newKeyword [keyword here] [corresponding value here].')
                         break;
-                    case '!editKeyword':
+                    case '!editkeyword':
                         message.channel.send('Please use the following format: !editKeyword [keyword here] [updated value here].')
                         break;
-                    case '!deleteKeyword':
+                    case '!deletekeyword':
                         message.channel.send('Please use the following format: !deleteKeyword [the keyword you want to delete here].')
                         break;
                     case '!affixes':
@@ -157,7 +158,7 @@ client.on('message', message => {
                             message.channel.send('The current Mythic+ Affixes are ' + res.title + '.')
                         })
                         break;
-                    case '!affixDetails':
+                    case '!affixdetails':
                         fetchHelper.getAffixes().then(res => {
                             res.affix_details.forEach(affix => {
                                 message.channel.send(affix.name + ' : ' + affix.description)
@@ -167,20 +168,23 @@ client.on('message', message => {
                     case '!char':
                         message.channel.send('Please use the following format: !char [character name] [optional realm].')
                         break;
-                    case '!guildRank':
+                    case '!guildrank':
                         fetchHelper.getRank().then(res => {
                             message.channel.send('Grand Central Parkway is currently rank ' + res.realm_rank +' on Sargeras and ' + res.world_rank + ' in the world.')
                         })
                         break;
-                    case '!setReminder':
+                    case '!setreminder':
                         // message.channel.send('Please use the format: !setReminder [time (24 hour time)] [date (optional)]')
                         break;
-                    case '!enableLogReminder':
+                    case '!nextlogreminder': 
+                        message.channel.send(wcLogReminder.pendingInvocations[0].job.nextInvocation().toDate().toLocaleString())
+                        break;
+                    case '!enablelogreminder':
                         if(schedule.scheduledJobs["warcraftlogs reminder"]){
                             message.channel.send('WarcraftLog Reminder is already scheduled!')
                         }
                         else{
-                            schedule.scheduleJob("warcraftlogs reminder", rule, function(){
+                            wcLogReminder = schedule.scheduleJob("warcraftlogs reminder", rule, function(){
                                 client.channels.get(`648974529217036310`).send("Reminder: " + `<@&453698550174318623> Don't forget to set up WarcraftLogs!`)
                             }); 
                             if(schedule.scheduledJobs["warcraftlogs reminder"]){
@@ -188,7 +192,7 @@ client.on('message', message => {
                             }
                         }
                         break;
-                    case '!disableLogReminder':
+                    case '!disablelogreminder':
                         if(schedule.scheduledJobs["warcraftlogs reminder"]){
                             schedule.scheduledJobs["warcraftlogs reminder"].cancel()
                             if(!schedule.scheduledJobs["warcraftlogs reminder"]){
@@ -205,8 +209,8 @@ client.on('message', message => {
                     case '!dst':
                         message.channel.send(`Daylight Savings is currently ${daylightSavings ? "on" : "off"}`)
                         break;
-                    case '!checkDst':
-                        newDaylightSavings = helper.checkDST() === -5 ? true : false
+                    case '!checkdst':
+                        newDaylightSavings = (new Date().getTimezoneOffset() / 60) === 5 ? true : false
                         if(daylightSavings !== newDaylightSavings){
                             message.channel.send(`Daylight Savings was ${daylightSavings} and has been updated to ${daylightSavings === true ? 'on' : 'off'}`)
                             daylightSavings = newDaylightSavings
@@ -216,7 +220,7 @@ client.on('message', message => {
                             message.channel.send(`Daylight Savings is already ${daylightSavings === true ? 'on' : 'off'}. No changes are necessary.`)
                         }
                         break;
-                    case '!dstOn':
+                    case '!dston':
                         //manually override daylight savings to on
                         if(daylightSavings){
                             message.channel.send("Daylight Savings is already on")
@@ -224,10 +228,10 @@ client.on('message', message => {
                         else{
                             daylightSavings = true
                             message.channel.send(`Daylight Savings has been set to ${daylightSavings ? "on" : "off"}`)
-                            helper.rescheduleWclReminder(schedule, rule, client, message)
+                            wcLogReminder = helper.rescheduleWclReminder(schedule, rule, client, message)
                         }
                         break;
-                    case '!dstOff':
+                    case '!dstoff':
                         //manually override daylight savings to off
                         if(!daylightSavings){
                             message.channel.send("Daylight Savings is already off")
@@ -235,7 +239,7 @@ client.on('message', message => {
                         else{
                            daylightSavings = false
                            message.channel.send(`Daylight Savings has been set to ${daylightSavings ? "on" : "off"}`)
-                           helper.rescheduleWclReminder(schedule, rule, client, message)
+                           wcLogReminder = helper.rescheduleWclReminder(schedule, rule, client, message)
                         }
                         break;
                     case '!time':
@@ -244,16 +248,16 @@ client.on('message', message => {
                     case '!date': 
                         message.channel.send(moment().utcOffset(daylightSavings ? -5 : -4).format('LL'))
                         break;
-                    case '!nextRaid':
+                    case '!nextraid':
                         raidScheduled ? 
                         message.channel.send(helper.timeUntilRaid(daylightSavings)) : 
                         message.channel.send("Seems like there is no recurring raid scheduled :slight_frown: See you when new content drops!")
                         break;
-                    case '!nextRaidToggle':
+                    case '!nextraidtoggle':
                         raidScheduled ? message.channel.send("recurring !nextRaid is now off") : message.channel.send("recurring !nextRaid is now on")
                         raidScheduled = !raidScheduled
                         break;
-                    case '!serverStatus':
+                    case '!serverstatus':
                         let serverStatusChecker = (firstCall = true) => {
                             fetchHelper.createAccessToken(BNET_ID, BNET_SECRET, region = 'us').then(res => {
                                 fetchHelper.getRealmStatus(res.access_token).then(res => {
@@ -302,14 +306,14 @@ client.on('message', message => {
             if(messageArray.length === 2){
                 readJson()
                 helper.newServerIdCheck(dictionary, channel_id)
-                switch(messageArray[0]){
-                    case '!newKeyword':
+                switch(messageArray[0].toLowerCase()){
+                    case '!newkeyword':
                         message.channel.send('Please use the following format: !newKeyword [keyword here] [corresponding value here].')
                         break;
-                    case '!editKeyword':
+                    case '!editkeyword':
                         message.channel.send('Please use the following format: !editKeyword [keyword here] [updated value here].')
                         break;
-                    case '!deleteKeyword':
+                    case '!deletekeyword':
                         if(dictionary[channel_id][messageArray[1]]){
                             delete dictionary[channel_id][messageArray[1]]
                             writeJson(dictionary)
@@ -347,29 +351,29 @@ client.on('message', message => {
             if(messageArray.length === 3){
                 readJson()
                 helper.newServerIdCheck(dictionary, channel_id)
-                switch(messageArray[0]){
-                    case '!newKeyword':
+                switch(messageArray[0].toLowerCase()){
+                    case '!newkeyword':
                         if(messageArray[1][0] !== '!'){
                             message.channel.send("Please start the new keyword with '!' ")
                         }
                         else{
-                            if(dictionary[channel_id][messageArray[1]]){
+                            if(dictionary[channel_id][messageArray[1].toLowerCase()]){
                                 message.channel.send("Keyword is already in use! Please try another keyword or use '!editKeyword' to modify an existing entry.")
                             }
                             else{
-                                dictionary[channel_id][messageArray[1]] = messageArray[2]
+                                dictionary[channel_id][messageArray[1].toLowerCase()] = messageArray[2]
                                 writeJson(dictionary)
                                 message.channel.send("Keyword has been added to the database!")
                             }
                         }
                         break;
-                    case '!editKeyword':
+                    case '!editkeyword':
                         if(messageArray[1][0] !== '!'){
                             message.channel.send("Please start the new keyword with '!' ")
                         }
                         else{
-                            if(dictionary[channel_id][messageArray[1]]){
-                                dictionary[channel_id][messageArray[1]] = messageArray[2]
+                            if(dictionary[channel_id][messageArray[1].toLowerCase()]){
+                                dictionary[channel_id][messageArray[1].toLowerCase()] = messageArray[2]
                                 writeJson(dictionary)
                                 message.channel.send("Keyword has been updated!")
                             }
