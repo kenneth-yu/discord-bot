@@ -108,6 +108,7 @@ const timeUntilRaid = (daylightSavings) => {
   }
 
 const checkDST = () => {
+    //this will only work if local time is set on server
     const stdTimezoneOffset = () => {
         var jan = new Date(0, 1)
         var jul = new Date(6, 1)
