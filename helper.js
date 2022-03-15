@@ -1,4 +1,8 @@
 let fs = require('fs')
+const fetchHelper = require('./fetchHelper.js')
+const config =  require('./config.json'); 
+var BNET_ID = config.BNET_ID
+var BNET_SECRET = config.BNET_SECRET
 
 //JSON Read/Write --------------------------------------------------------------------------------------------
 const readJson = dictionary => {
@@ -128,7 +132,7 @@ const timeUntilRaid = (daylightSavings) => {
 //     }
 // }
 
-const rescheduleWclReminder = (schedule, rule, client, message) =>{
+const rescheduleWclReminder = (schedule, rule, client, message) => {
     if(schedule.scheduledJobs["warcraftlogs reminder"]){
         schedule.scheduledJobs["warcraftlogs reminder"].cancel()
        let newLogReminder = schedule.scheduleJob("warcraftlogs reminder", rule, function(){
@@ -139,6 +143,58 @@ const rescheduleWclReminder = (schedule, rule, client, message) =>{
         }
         return newLogReminder
     }
+}
+
+const serverStatusHelper = (message, serverStatusPing, addGuildie)=> {
+    if(addGuildie){
+        serverStatusPing[addGuildie] = addGuildie
+        message.channel.send(`<@${addGuildie}> will be pinged when the server is up!`)
+    }
+    else{
+        serverStatusPing[message.author.id] = message.author.id
+        message.channel.send(`<@${message.author.id}> I'll ping you when the server is up!`)
+    }
+}
+
+const recurisveStatusChecker = (message, serverStatusPing, addGuildie) => {
+    let serverStatusChecker = (firstCall = true) => {
+        fetchHelper.createAccessToken(BNET_ID, BNET_SECRET, region = 'us').then(res => {
+            fetchHelper.getRealmStatus(res.access_token).then(res => {
+                if(res.status.type === 'UP'){
+                    let userString = ''
+                    Object.keys(serverStatusPing).forEach(user => userString += `<@${user}> ` )
+                    message.channel.send(`${userString}Sargeras is up! :white_check_mark:`)
+                    serverStatusPing = {}
+                }
+                else{
+                    if(firstCall === true){
+                        message.channel.send('Sargeras is down  :x:')
+                        if(serverStatusPing[addGuildie]){
+                            message.channel.send("They are already signed up for a ping when Sargeras comes online.")
+                        }
+                        else if (serverStatusPing[message.author.id] && !addGuildie){
+                            message.channel.send("You're already signed up for a ping when Sargeras comes online.")
+                        }
+                        else{
+                            if(Object.keys(serverStatusPing).length > 0){
+                                //Someone has already started serverStatusChecker
+                                serverStatusHelper(message, serverStatusPing, addGuildie)
+                            }else{
+                                //Nobody has started serverStatusChecker
+                                serverStatusHelper(message, serverStatusPing, addGuildie)
+                                setTimeout(() => serverStatusChecker(false), 45000)
+                            }
+                        }
+                    }
+                    else{
+                        //Recursive call that ends when server is 'UP'
+                        setTimeout(() => serverStatusChecker(false), 45000)
+                    }
+                }
+            })
+        })
+    }
+    serverStatusChecker()
 }
 
 //Helper Functions END -----------------------------------------------------------------------------------------------
@@ -152,3 +208,4 @@ exports.argCompiler = argCompiler;
 exports.timeUntilRaid = timeUntilRaid;
 // exports.checkDST = checkDST;
 exports.rescheduleWclReminder = rescheduleWclReminder;
+exports.recurisveStatusChecker = recurisveStatusChecker;
