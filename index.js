@@ -6,8 +6,8 @@ const moment = require('moment');
 const helper = require('./helper.js')
 const fetchHelper = require('./fetchHelper.js')
 
-var BNET_ID = config.BNET_ID
-var BNET_SECRET = config.BNET_SECRET
+// var BNET_ID = config.BNET_ID
+// var BNET_SECRET = config.BNET_SECRET
 
 let fs = require('fs')
 let dictionary 
@@ -62,7 +62,7 @@ client.once('ready', () => {
 //9:00PM EST is 01:00 UTC w/ Daylight Savings - 4 Hour Difference
 //Warcraft Log Reminder -------------------------------------------------------------------------------------------------------
 var rule = new schedule.RecurrenceRule();
-rule.dayOfWeek = [new schedule.Range(4, 5)];
+rule.dayOfWeek = [new schedule.Range(3, 4)];
 rule.hour =  21;
 rule.minute = 0;
 
@@ -79,15 +79,16 @@ checkDstRule.minute = 0;
 
 schedule.scheduleJob("check daylight savings status", checkDstRule, function(){
     let botTestingChannel = client.channels.get(`678287236239982593`)
-    botTestingChannel.send('Daylight Savings Status was automatically checked.')
+    // botTestingChannel.send('Daylight Savings Status was automatically checked.')
     newDaylightSavings = (new Date().getTimezoneOffset() / 60) === 5 ? true : false
     if(daylightSavings !== newDaylightSavings){
+        botTestingChannel.send('Daylight Savings Status was automatically checked.')
         botTestingChannel.send(`<@169835135804506112> Daylight Savings was ${daylightSavings=== true ? 'on' : 'off'} and has been updated to ${newDaylightSavings === true ? 'on' : 'off'}`)
         daylightSavings = newDaylightSavings
         wcLogReminder = helper.rescheduleWclReminder(schedule, rule, client, message)
     }
     else{
-        botTestingChannel.send(`Daylight Savings is already ${daylightSavings === true ? 'on' : 'off'}. No changes are necessary.`)
+        // botTestingChannel.send(`Daylight Savings is already ${daylightSavings === true ? 'on' : 'off'}. No changes are necessary.`)
     }
 })
 //Check Daylight Savings END ---------------------------------------------------------------------------------------------------------
@@ -128,14 +129,14 @@ client.on('message', message => {
     }else{
         // Parse Discord Channels ------------------------------------------------------------------------------------------------------------
         if(message.content[0] === '!'){
-            let channel_id = message.channel.guild.id
+            let channelId = message.channel.guild.id
             var [arg1,arg2, ...arg3] = message.content.split(' ');
             arg3 = arg3.join(' ');
             let messageArray = [arg1]
             helper.argCompiler(messageArray, arg2, arg3)
             
             if(messageArray.length === 1){
-                helper.newServerIdCheck(dictionary, channel_id)
+                helper.newServerIdCheck(dictionary, channelId)
                 switch (message.content.toLowerCase()){
                     case '!suggest':
                         message.channel.send("You can send an anonymous message to the suggestion-box channel by direct messaging me !suggest [your message here]")
@@ -249,63 +250,43 @@ client.on('message', message => {
                         message.channel.send(moment().utcOffset(daylightSavings ? -5 : -4).format('LL'))
                         break;
                     case '!nextraid':
-                        raidScheduled ? 
-                        message.channel.send(helper.timeUntilRaid(daylightSavings)) : 
+                        let nextRaid = wcLogReminder.pendingInvocations[0].job.nextInvocation().toDate()
+                        schedule.scheduledJobs["warcraftlogs reminder"] ? 
+                        message.channel.send(helper.timeUntilRaid(nextRaid)) : 
                         message.channel.send("Seems like there is no recurring raid scheduled :slight_frown: See you when new content drops!")
                         break;
-                    case '!nextraidtoggle':
-                        raidScheduled ? message.channel.send("recurring !nextRaid is now off") : message.channel.send("recurring !nextRaid is now on")
-                        raidScheduled = !raidScheduled
-                        break;
+                    // case '!nextraidtoggle':
+                    //     raidScheduled ? message.channel.send("recurring !nextRaid is now off") : message.channel.send("recurring !nextRaid is now on")
+                    //     raidScheduled = !raidScheduled
+                    //     break;
                     case '!serverstatus':
-                        let serverStatusChecker = (firstCall = true) => {
-                            fetchHelper.createAccessToken(BNET_ID, BNET_SECRET, region = 'us').then(res => {
-                                fetchHelper.getRealmStatus(res.access_token).then(res => {
-                                    if(res.status.type === 'UP'){
-                                        let userString = ''
-                                        Object.keys(serverStatusPing).forEach(user => userString += `<@${user}> ` )
-                                        message.channel.send(`${userString}Sargeras is up! :white_check_mark:`)
-                                        serverStatusPing = {}
-                                    }
-                                    else{
-                                        if(firstCall === true){
-                                            message.channel.send('Sargearas is down  :x:')
-                                            if(serverStatusPing[message.author.id]){
-                                                message.channel.send("You're already signed up for a ping when Sargeras comes online.")
-                                            }else{
-                                                if(Object.keys(serverStatusPing).length > 0){
-                                                    //Someone has already started serverStatusChecker
-                                                    serverStatusPing[message.author.id] = message.author.id
-                                                    message.channel.send(`<@${message.author.id}> I'll ping you when the server is up!`)
-                                                }else{
-                                                    //Nobody has started serverStatusChecker
-                                                    serverStatusPing[message.author.id] = message.author.id
-                                                    message.channel.send(`<@${message.author.id}> I'll ping you when the server is up!`)
-                                                    setTimeout(() => serverStatusChecker(false), 45000)
-                                                }
-                                            }
-                                        }
-                                        else{
-                                            //Recursive call that ends when server is 'UP'
-                                            setTimeout(() => serverStatusChecker(false), 45000)
-                                        }
-                                    }
-                                })
-                            })
+                        helper.recurisveStatusChecker(message, serverStatusPing)
+                        break;
+                    case '!pinglist':
+                        let pingList = ''
+                        if(Object.keys(serverStatusPing).length > 0){
+                            Object.keys(serverStatusPing).forEach( guildie => pingList += `${guildie} `)
+                            message.channel.send(pingList)
+                        }else{
+                            message.channel.send("Ping list is empty.")
                         }
-                        serverStatusChecker()
+                        break;
+                    case '!clearpinglist':
+                        // helper.testStatusChecker(message, serverStatusPing)
+                        // console.log(serverStatusPing)
                         break;
                     default:
                         readJson()
-                        if(dictionary[channel_id][message.content]){
-                            message.channel.send(dictionary[channel_id][message.content])
+                        if(dictionary[channelId][message.content]){
+                            message.channel.send(dictionary[channelId][message.content])
                         }
                         break;
                 }
             }
             if(messageArray.length === 2){
+                let channelId = message.channel.guild.id
                 readJson()
-                helper.newServerIdCheck(dictionary, channel_id)
+                helper.newServerIdCheck(dictionary, channelId)
                 switch(messageArray[0].toLowerCase()){
                     case '!newkeyword':
                         message.channel.send('Please use the following format: !newKeyword [keyword here] [corresponding value here].')
@@ -314,8 +295,8 @@ client.on('message', message => {
                         message.channel.send('Please use the following format: !editKeyword [keyword here] [updated value here].')
                         break;
                     case '!deletekeyword':
-                        if(dictionary[channel_id][messageArray[1]]){
-                            delete dictionary[channel_id][messageArray[1]]
+                        if(dictionary[channelId][messageArray[1]]){
+                            delete dictionary[channelId][messageArray[1]]
                             writeJson(dictionary)
                             message.channel.send("Keyword has been removed from the database!")
                         }
@@ -337,6 +318,20 @@ client.on('message', message => {
                             }
                         })
                         break;
+                    case '!addping': 
+                        let guild = client.guilds.get(channelId)
+                        let guildieId = messageArray[1].replace(/[^0-9]/g,'')
+                        if(guild.member(guildieId)){
+                            if(serverStatusPing.length > 0){
+                                //Someone has already started serverStatusChecker
+                                serverStatusPing[guildieId] = guildieId
+                                message.channel.send(`<@${guildieId}> will be pinged when the server is up!`)
+                            }
+                            else{
+                                helper.recurisveStatusChecker(message, serverStatusPing, guildieId)
+                            }
+                        }
+                        break
                     case '!setReminder':
                         //!setReminder [what] [when (optional)]
     
@@ -350,18 +345,18 @@ client.on('message', message => {
             }
             if(messageArray.length === 3){
                 readJson()
-                helper.newServerIdCheck(dictionary, channel_id)
+                helper.newServerIdCheck(dictionary, channelId)
                 switch(messageArray[0].toLowerCase()){
                     case '!newkeyword':
                         if(messageArray[1][0] !== '!'){
                             message.channel.send("Please start the new keyword with '!' ")
                         }
                         else{
-                            if(dictionary[channel_id][messageArray[1].toLowerCase()]){
+                            if(dictionary[channelId][messageArray[1].toLowerCase()]){
                                 message.channel.send("Keyword is already in use! Please try another keyword or use '!editKeyword' to modify an existing entry.")
                             }
                             else{
-                                dictionary[channel_id][messageArray[1].toLowerCase()] = messageArray[2]
+                                dictionary[channelId][messageArray[1].toLowerCase()] = messageArray[2]
                                 writeJson(dictionary)
                                 message.channel.send("Keyword has been added to the database!")
                             }
@@ -372,8 +367,8 @@ client.on('message', message => {
                             message.channel.send("Please start the new keyword with '!' ")
                         }
                         else{
-                            if(dictionary[channel_id][messageArray[1].toLowerCase()]){
-                                dictionary[channel_id][messageArray[1].toLowerCase()] = messageArray[2]
+                            if(dictionary[channelId][messageArray[1].toLowerCase()]){
+                                dictionary[channelId][messageArray[1].toLowerCase()] = messageArray[2]
                                 writeJson(dictionary)
                                 message.channel.send("Keyword has been updated!")
                             }

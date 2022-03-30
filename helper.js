@@ -1,4 +1,8 @@
 let fs = require('fs')
+const fetchHelper = require('./fetchHelper.js')
+const config =  require('./config.json'); 
+var BNET_ID = config.BNET_ID
+var BNET_SECRET = config.BNET_SECRET
 
 //JSON Read/Write --------------------------------------------------------------------------------------------
 const readJson = dictionary => {
@@ -52,50 +56,10 @@ const argCompiler = (messageArray, arg2, arg3) => {
     console.log(messageArray)
 }
 
-const timeUntilRaid = (daylightSavings) => {
-    // Get current date and time
-    let today = new Date();
-  
-    // Get number of days to Raid Day
-    let dayNum = today.getDay();
-    //In EST our raid times are Wed/Thur at 9PM. In UTC it is Thur/Fri at 1/2AM
-    let nextRaidDay = 4
-    let daysToRaid = 0
-    //9:00PM EST is 00:00 UTC w/o Daylight Savings - 5 Hour Difference
-    //9:00PM EST is 01:00 UTC w/ Daylight Savings - 4 Hour Difference
-    let raidTimeUTC = daylightSavings ? 2 : 1
-    if(dayNum === 4){ //Handles Wednesday(3) EST or Thursday(4) UTC
-        if(today.getHours() < raidTimeUTC && today.getMinutes() < 59 && today.getSeconds() < 59){
-            nextRaidDay = 4
-            daysToRaid = 0
-        }
-        else{
-            // It is Thusday at 1 AM. Our next Raid is Friday at 1 AM 
-            // Thursday is 4 and Friday is 5
-            nextRaidDay = 5
-            daysToRaid = 1  
-        }
-    } 
-    else{
-        if(dayNum > 4){ //Handles Friday (5) to Saturday(6)
-            if(dayNum === 5 && today.getHours() < raidTimeUTC && today.getMinutes() < 59 && today.getSeconds() < 59){
-                nextRaidDay = 5
-                daysToRaid = 0
-            }
-            else{
-                daysToRaid = 7 - dayNum + nextRaidDay
-            }
-        }
-        else if (dayNum < 4){ //Handles Sunday(0) to Wednesday(3)
-            daysToRaid = nextRaidDay - dayNum
-        }
-    }
-    // Get milliseconds to raid time
-    let raidTime = new Date(+today);
-    raidTime.setDate(raidTime.getDate() + daysToRaid);
-    raidTime.setHours(raidTimeUTC,0,0,0);
-    // Round up ms remaining so seconds remaining matches clock
-    let ms = Math.ceil((raidTime - today)/1000)*1000;
+const timeUntilRaid = (nextRaid) => {
+    let now = new Date()
+    let timeDiff = nextRaid - now
+    let ms = Math.ceil((timeDiff)/1000)*1000;
     let d =  ms / 8.64e7 | 0;
     let h = (ms % 8.64e7) / 3.6e6 | 0;
     let m = (ms % 3.6e6)  / 6e4 | 0;
@@ -107,28 +71,7 @@ const timeUntilRaid = (daylightSavings) => {
     return `Our next raid is in ${days}${hours}${minutes}and ${s} Seconds.`
   }
 
-// const checkDST = () => {
-//     //this will only work if local time is set on server
-//     const stdTimezoneOffset = () => {
-//         var jan = new Date(0, 1)
-//         var jul = new Date(6, 1)
-//         return Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset())
-//     }
-
-//     var today = new Date()
-
-//     const isDstObserved = (today) => {
-//         return today.getTimezoneOffset() < stdTimezoneOffset()
-//     }
-
-//     if (isDstObserved(today)) {
-//         return -4
-//     } else {
-//         return -5
-//     }
-// }
-
-const rescheduleWclReminder = (schedule, rule, client, message) =>{
+const rescheduleWclReminder = (schedule, rule, client, message) => {
     if(schedule.scheduledJobs["warcraftlogs reminder"]){
         schedule.scheduledJobs["warcraftlogs reminder"].cancel()
        let newLogReminder = schedule.scheduleJob("warcraftlogs reminder", rule, function(){
@@ -141,6 +84,70 @@ const rescheduleWclReminder = (schedule, rule, client, message) =>{
     }
 }
 
+const serverStatusHelper = (message, serverStatusPing, addGuildie)=> {
+    if(addGuildie){
+        serverStatusPing[addGuildie] = addGuildie
+        message.channel.send(`<@${addGuildie}> will be pinged when the server is up!`)
+    }
+    else{
+        serverStatusPing[message.author.id] = message.author.id
+        message.channel.send(`<@${message.author.id}> I'll ping you when the server is up!`)
+    }
+}
+
+const recurisveStatusChecker = (message, serverStatusPing, addGuildie) => {
+    let serverStatusChecker = (firstCall = true) => {
+        fetchHelper.createAccessToken(BNET_ID, BNET_SECRET, region = 'us').then(res => {
+            fetchHelper.getRealmStatus(res.access_token).then(res => {
+                if(res.status.type === 'UP'){
+                    let userString = ''
+                    Object.keys(serverStatusPing).forEach(user => {
+                        userString += `<@${user}> `
+                        delete serverStatusPing[user]
+                    })
+                    message.channel.send(`${userString}Sargeras is up! :white_check_mark:`)
+                }
+                else{
+                    if(firstCall === true){
+                        message.channel.send('Sargeras is down  :x:')
+                        if(serverStatusPing[addGuildie]){
+                            message.channel.send("They are already signed up for a ping when Sargeras comes online.")
+                        }
+                        else if (serverStatusPing[message.author.id] && !addGuildie){
+                            message.channel.send("You're already signed up for a ping when Sargeras comes online.")
+                        }
+                        else{
+                            if(Object.keys(serverStatusPing).length > 0){
+                                //Someone has already started serverStatusChecker
+                                serverStatusHelper(message, serverStatusPing, addGuildie)
+                            }else{
+                                //Nobody has started serverStatusChecker
+                                serverStatusHelper(message, serverStatusPing, addGuildie)
+                                setTimeout(() => serverStatusChecker(false), 45000)
+                            }
+                        }
+                    }
+                    else{
+                        //Recursive call that ends when server is 'UP'
+                        setTimeout(() => serverStatusChecker(false), 45000)
+                    }
+                }
+            })
+        })
+    }
+    serverStatusChecker()
+}
+
+const testStatusChecker = (message, serverStatusPing) => {
+    let userString = ''
+    Object.keys(serverStatusPing).forEach(user => {
+        userString += `<@${user}> `
+        delete serverStatusPing[user]
+    })
+    message.channel.send(`${userString}Sargeras is up! :white_check_mark:`)
+    console.log(serverStatusPing, "inside function")
+}
+
 //Helper Functions END -----------------------------------------------------------------------------------------------
 
 
@@ -150,5 +157,6 @@ exports.writeJson = writeJson;
 exports.newServerIdCheck = newServerIdCheck;
 exports.argCompiler = argCompiler;
 exports.timeUntilRaid = timeUntilRaid;
-// exports.checkDST = checkDST;
 exports.rescheduleWclReminder = rescheduleWclReminder;
+exports.recurisveStatusChecker = recurisveStatusChecker;
+// exports.testStatusChecker = testStatusChecker;
