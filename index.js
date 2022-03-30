@@ -62,7 +62,7 @@ client.once('ready', () => {
 //9:00PM EST is 01:00 UTC w/ Daylight Savings - 4 Hour Difference
 //Warcraft Log Reminder -------------------------------------------------------------------------------------------------------
 var rule = new schedule.RecurrenceRule();
-rule.dayOfWeek = [new schedule.Range(4, 5)];
+rule.dayOfWeek = [new schedule.Range(3, 4)];
 rule.hour =  21;
 rule.minute = 0;
 
@@ -79,15 +79,16 @@ checkDstRule.minute = 0;
 
 schedule.scheduleJob("check daylight savings status", checkDstRule, function(){
     let botTestingChannel = client.channels.get(`678287236239982593`)
-    botTestingChannel.send('Daylight Savings Status was automatically checked.')
+    // botTestingChannel.send('Daylight Savings Status was automatically checked.')
     newDaylightSavings = (new Date().getTimezoneOffset() / 60) === 5 ? true : false
     if(daylightSavings !== newDaylightSavings){
+        botTestingChannel.send('Daylight Savings Status was automatically checked.')
         botTestingChannel.send(`<@169835135804506112> Daylight Savings was ${daylightSavings=== true ? 'on' : 'off'} and has been updated to ${newDaylightSavings === true ? 'on' : 'off'}`)
         daylightSavings = newDaylightSavings
         wcLogReminder = helper.rescheduleWclReminder(schedule, rule, client, message)
     }
     else{
-        botTestingChannel.send(`Daylight Savings is already ${daylightSavings === true ? 'on' : 'off'}. No changes are necessary.`)
+        // botTestingChannel.send(`Daylight Savings is already ${daylightSavings === true ? 'on' : 'off'}. No changes are necessary.`)
     }
 })
 //Check Daylight Savings END ---------------------------------------------------------------------------------------------------------
@@ -249,28 +250,31 @@ client.on('message', message => {
                         message.channel.send(moment().utcOffset(daylightSavings ? -5 : -4).format('LL'))
                         break;
                     case '!nextraid':
-                        raidScheduled ? 
-                        message.channel.send(helper.timeUntilRaid(daylightSavings)) : 
+                        let nextRaid = wcLogReminder.pendingInvocations[0].job.nextInvocation().toDate()
+                        schedule.scheduledJobs["warcraftlogs reminder"] ? 
+                        message.channel.send(helper.timeUntilRaid(nextRaid)) : 
                         message.channel.send("Seems like there is no recurring raid scheduled :slight_frown: See you when new content drops!")
                         break;
-                    case '!nextraidtoggle':
-                        raidScheduled ? message.channel.send("recurring !nextRaid is now off") : message.channel.send("recurring !nextRaid is now on")
-                        raidScheduled = !raidScheduled
-                        break;
+                    // case '!nextraidtoggle':
+                    //     raidScheduled ? message.channel.send("recurring !nextRaid is now off") : message.channel.send("recurring !nextRaid is now on")
+                    //     raidScheduled = !raidScheduled
+                    //     break;
                     case '!serverstatus':
                         helper.recurisveStatusChecker(message, serverStatusPing)
                         break;
                     case '!pinglist':
                         let pingList = ''
-                        Object.keys(serverStatusPing).forEach( guildie => pingList += `${guildie} `)
-                        message.channel.send(pingList)
+                        if(Object.keys(serverStatusPing).length > 0){
+                            Object.keys(serverStatusPing).forEach( guildie => pingList += `${guildie} `)
+                            message.channel.send(pingList)
+                        }else{
+                            message.channel.send("Ping list is empty.")
+                        }
                         break;
-                    // case '!clearpinglist':
-                    //     let userString = ''
-                    //     Object.keys(serverStatusPing).forEach(user => userString += `<@${user}> ` )
-                    //     message.channel.send(`${userString}Sargeras is up! :white_check_mark:`)
-                    //     serverStatusPing = {}
-                    //     break;
+                    case '!clearpinglist':
+                        // helper.testStatusChecker(message, serverStatusPing)
+                        // console.log(serverStatusPing)
+                        break;
                     default:
                         readJson()
                         if(dictionary[channelId][message.content]){
