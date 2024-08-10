@@ -19,10 +19,10 @@ This is a custom Discord bot built for the World of Warcraft guild **Grand Centr
 - `/enablelogreminder`: Enable the automatic WarcraftLogs reminder.
 - `/disablelogreminder`: Disable the automatic WarcraftLogs reminder.
 - `/nextlogreminder`: Get the time of the next scheduled WarcraftLogs reminder.
-- `/nextraid`: Get the time remaining until the next raid.
+- `/nextraid`: Get the time remaining until the next raid. This helps ensure guildies in different timezones and countries are on time.
 - `/dst`, `/dston`, `/dstoff`: Manage daylight savings settings.
 - `/checkdst`: Check if the current daylight savings status matches the bot's setting.
-- `/time`, `/date`: Get the current time or date.
+- `/time`, `/date`: Get the current time or date. This helps our international guildies keep track of events.
 
 ### Custom Commands
 - `/newkeyword`: Add a new custom keyword to the database.
