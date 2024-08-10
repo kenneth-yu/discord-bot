@@ -1,34 +1,23 @@
-let fs = require('fs')
+const fs = require('fs')
 const fetchHelper = require('./fetchHelper.js')
 const config =  require('./config.json'); 
 var BNET_ID = config.BNET_ID
 var BNET_SECRET = config.BNET_SECRET
 
 //JSON Read/Write --------------------------------------------------------------------------------------------
-const readJson = dictionary => {
-    fs.readFile('./dictionary.json', 'utf8', (err, jsonString) => {
-        if (err) {
-            console.log("Error reading file from disk:", err)
-            return err
+const readJson = () => {
+    let dictionary
+    try{
+        dictionary = JSON.parse(fs.readFileSync('./dictionary.json', 'utf8'))
+        if(dictionary){
+            console.log("JSON file was read successfully")
         }
-        try {
-            console.log(dictionary, "before if and else")
-            if(dictionary){
-                dictionary = JSON.parse(jsonString)
-                console.log("JSON file was read successfully and dictionary has been updated")
-            }
-            else{
-                dictionary = JSON.parse(jsonString)
-                console.log("JSON file was read successfully and dictionary is setting for the first time")
-            }
-            console.log(dictionary)
-            return dictionary
-        } 
-        catch(err) {
-            writeJson({})
-            console.log("JSON file was empty. Empty JSON object was added")
-        }
-    })
+    }
+    catch(err){
+        writeJson({})
+        console.log("JSON file was empty. Empty JSON object was added")
+    }
+    return dictionary
 }
 
 const writeJson = (newDictionary) => {
@@ -84,45 +73,53 @@ const rescheduleWclReminder = (schedule, rule, client, message) => {
     }
 }
 
-const serverStatusHelper = (message, serverStatusPing, addGuildie)=> {
+const serverStatusHelper = (interaction, serverStatusPing, addGuildie)=> {
     if(addGuildie){
         serverStatusPing[addGuildie] = addGuildie
-        message.channel.send(`<@${addGuildie}> will be pinged when the server is up!`)
+        interaction.reply(`<@${addGuildie}> will be pinged when the server is up!`)
     }
     else{
-        serverStatusPing[message.author.id] = message.author.id
-        message.channel.send(`<@${message.author.id}> I'll ping you when the server is up!`)
+        serverStatusPing[interaction.user.id] = interaction.user.id
+        interaction.reply(`I'll ping you when the server is up!`)
     }
 }
 
-const recurisveStatusChecker = (message, serverStatusPing, addGuildie) => {
+const recurisveStatusChecker = (interaction, serverStatusPing, client, addGuildie) => {
+    let generalChannel = client.channels.cache.get(`678287236239982593`);
     let serverStatusChecker = (firstCall = true) => {
         fetchHelper.createAccessToken(BNET_ID, BNET_SECRET, region = 'us').then(res => {
             fetchHelper.getRealmStatus(res.access_token).then(res => {
                 if(res.status.type === 'UP'){
-                    let userString = ''
-                    Object.keys(serverStatusPing).forEach(user => {
-                        userString += `<@${user}> `
-                        delete serverStatusPing[user]
-                    })
-                    message.channel.send(`${userString}Sargeras is up! :white_check_mark:`)
+                    if(Object.keys(serverStatusPing).length){
+                        let userString = ''
+                        Object.keys(serverStatusPing).forEach(user => {
+                            userString += `<@${user}> `
+                            delete serverStatusPing[user]
+                        })
+                        interaction.reply({content: 'Status sent in general chat', ephemeral: true})
+                        generalChannel.send`${userString}Sargeras is up! :white_check_mark:`()
+                    }
+                    else{
+
+                        interaction.reply(`Sargeras is up! :white_check_mark:`)
+                    }
                 }
                 else{
                     if(firstCall === true){
-                        message.channel.send('Sargeras is down  :x:')
+                        interaction.reply('Sargeras is down  :x:')
                         if(serverStatusPing[addGuildie]){
-                            message.channel.send("They are already signed up for a ping when Sargeras comes online.")
+                            interaction.reply("They are already signed up for a ping when Sargeras comes online.")
                         }
-                        else if (serverStatusPing[message.author.id] && !addGuildie){
-                            message.channel.send("You're already signed up for a ping when Sargeras comes online.")
+                        else if (serverStatusPing[interaction.author.id] && !addGuildie){
+                            interaction.reply("You're already signed up for a ping when Sargeras comes online.")
                         }
                         else{
                             if(Object.keys(serverStatusPing).length > 0){
                                 //Someone has already started serverStatusChecker
-                                serverStatusHelper(message, serverStatusPing, addGuildie)
+                                serverStatusHelper(interaction, serverStatusPing, addGuildie)
                             }else{
                                 //Nobody has started serverStatusChecker
-                                serverStatusHelper(message, serverStatusPing, addGuildie)
+                                serverStatusHelper(interaction, serverStatusPing, addGuildie)
                                 setTimeout(() => serverStatusChecker(false), 45000)
                             }
                         }
@@ -137,6 +134,7 @@ const recurisveStatusChecker = (message, serverStatusPing, addGuildie) => {
     }
     serverStatusChecker()
 }
+
 
 const testStatusChecker = (message, serverStatusPing) => {
     let userString = ''
@@ -159,4 +157,3 @@ exports.argCompiler = argCompiler;
 exports.timeUntilRaid = timeUntilRaid;
 exports.rescheduleWclReminder = rescheduleWclReminder;
 exports.recurisveStatusChecker = recurisveStatusChecker;
-// exports.testStatusChecker = testStatusChecker;

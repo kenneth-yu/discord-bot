@@ -47,7 +47,7 @@ async function getRank() {
         // 'Content-Type': 'application/x-www-form-urlencoded',
       },
     });
-    return await response.json(); // parses JSON response into native JavaScript objects
+    return await response; // parses JSON response into native JavaScript objects
   }
 //WowProgress Fetch END -------------------------------------------------------------------------------------------
 
@@ -106,8 +106,8 @@ async function getRealmStatus(accessToken) {
 }
 
 
-exports.getAffixes = getAffixes;
 exports.getChar = getChar;
 exports.getRank = getRank;
 exports.createAccessToken = createAccessToken;
 exports.getRealmStatus = getRealmStatus;
+exports.getAffixes = getAffixes;
